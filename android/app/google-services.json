@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1082631328396",
+    "project_id": "transport-assistant-2c59e",
+    "storage_bucket": "transport-assistant-2c59e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1082631328396:android:afd4fb490e60ad42a7a1a9",
+        "android_client_info": {
+          "package_name": "com.example.transport_assistant"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1082631328396-4toi6ucbgr3hako9310rkpdrja1hde2p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAmLlRt_0eygATGRjiC1EXDmP9u5ry-DaY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1082631328396-4toi6ucbgr3hako9310rkpdrja1hde2p.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
