@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:transport_assistant/Data/register.dart';
@@ -10,13 +9,16 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'dart:async';
-import 'package:firebase_storage/firebase_storage.dart';
-
 import '../Data/favorite_points.dart';
 import 'acount/drwer_acount.dart';
-double lastLat = 36.0333;
-double lastLng = 6.5833;
-int Selection = 1;
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+
+double lastLat = 36.021284;
+double lastLng = 6.567206;
+
 class HomePage extends StatefulWidget {
   final Function(Locale)? onLocaleChanged;
   const HomePage({super.key, this.onLocaleChanged}) ;
@@ -26,16 +28,19 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  int Selection = 3;
   LatLng? _selectedPoint;
   String? _selectedAddress;
   bool _showBottomInfo = false;
-  final Completer<GoogleMapController> _controller = Completer();
-  GoogleMapController? _mapController;
-  final Set<Marker> _markers = {};
+  final MapController _mapController = MapController();
+  final List<Marker> _markers = [];
   bool _showSearch = false;
   final TextEditingController _searchController = TextEditingController();
-  final double _zoomLevel = 14;
-
+  final LatLng startPoint = LatLng(36.021369, 6.566466);
+  final LatLng endPoint = LatLng(36.034488, 6.572595);
+  List<LatLng> routePoints = [];
+   List<Marker> _taxiMarkers = [];
+   List<Marker> _busMarkers = [];
   @override
   void initState() {
     super.initState();
@@ -55,6 +60,199 @@ class HomePageState extends State<HomePage> {
       print("Error loading user image: $e");
     }
   }
+  Future<List<LatLng>> loadRouteFromFirebase(String routeName,String route) async {
+    final doc = await FirebaseFirestore.instance
+        .collection(route)
+    //'routes'
+        .doc(routeName)
+        .get();
+
+    if (!doc.exists) return [];
+
+    final List data = doc['points'];
+
+    return data
+        .map((e) => LatLng(e['lat'], e['lng']))
+        .toList();
+  }
+  Future<void> changeSelection( int newSelection) async {
+    setState(() {
+      Selection = newSelection;
+      routePoints.clear();
+      loopRoutePoints.clear();
+    });
+
+    switch (Selection) {
+      case 1:
+        await loadTaxiRoute();
+        buildTaxiMarkers();
+        if (_taxiMarker.isNotEmpty) {
+          _mapController.move(_taxiMarker.first, 18);
+        }
+        break;
+
+      case 3:
+        await loadBusRoute();
+        buildBusMarkers();
+        if (_busMarker.isNotEmpty) {
+          _mapController.move(_busMarker.first, 18);
+        }
+        break;
+    }
+  }
+
+  Future<void> loadTaxiRoute() async {
+    final points = await loadRouteFromFirebase('taxi','routes');
+    final markers = await loadRouteFromFirebase('taxi','markers');
+    setState(() {
+      routePoints = points;
+      _taxiMarker= markers;
+    });
+  }
+  Future<void> loadBusRoute() async {
+    final points = await loadRouteFromFirebase('bus','routes');
+    final marker = await loadRouteFromFirebase('bus','markers');
+
+    setState(() {
+      loopRoutePoints = points;
+      _busMarker= marker;
+    });
+
+  }
+
+  List<LatLng> loopRoutePoints = [];
+  List<LatLng> _taxiMarker = [];
+  List<LatLng> _busMarker = [];
+
+  // Future<void> saveRouteToFirebase(
+  //     String type,
+  //     List<LatLng> points,
+  //     ) async {
+  //   final data = points
+  //       .map((p) => {
+  //     'lat': p.latitude,
+  //     'lng': p.longitude,
+  //   })
+  //       .toList();
+  //
+  //   await FirebaseFirestore.instance
+  //       .collection('markers')
+  //       .doc(type)
+  //       .set({'points': data});
+  // }
+
+  Future<void> buildTaxiMarkers() async {
+    _taxiMarkers.clear();
+
+
+
+    for (int i = 0; i < _taxiMarker.length; i++) {
+      _taxiMarkers.add(
+        Marker(
+          point: _taxiMarker[i],
+          width: 40,
+          height: 40,
+          child: CircleAvatar(
+            backgroundColor: Colors.black54,
+            child: Icon(
+              Icons.local_taxi,
+              color: Colors.greenAccent,
+              size: 30,
+            ),
+          ),
+        ),
+      );
+    }
+    // await saveRouteToFirebase('taxi', taxiStops);
+  }
+  Future<void> buildBusMarkers() async {
+    setState(() {
+      _busMarkers.clear();
+      for (int i = 0; i < _busMarker.length; i++) {
+        _busMarkers.add(
+          Marker(
+            point: _busMarker[i],
+            width: 40,
+            height: 40,
+            child: CircleAvatar(
+              backgroundColor: Colors.black54,
+              child: Icon(
+                Icons.directions_bus,
+                color: Colors.greenAccent,
+                size: 30,
+              ),
+            ),
+          ),
+        );
+      }
+    });
+  }
+
+  // await saveRouteToFirebase('bus', busStops);
+  // void fetchLoopRoute() async {
+  //   final loopWaypoints = [
+  //     LatLng(36.021657, 6.563483),
+  //     LatLng(36.021427, 6.566844),
+  //     LatLng(36.021902, 6.567370),
+  //     LatLng(36.02312, 6.57233),
+  //     LatLng(36.040394, 6.574727),
+  //     LatLng(36.043942, 6.567464),
+  //     LatLng(36.042003, 6.567560),
+  //     LatLng(36.041860, 6.563918),
+  //     LatLng(36.040229, 6.563816),
+  //     LatLng(36.039713, 6.565136),
+  //     LatLng(36.039179, 6.565999),
+  //     LatLng(36.038351, 6.566638),
+  //     LatLng(36.037596, 6.567078),
+  //     LatLng(36.035904, 6.568000),
+  //     LatLng(36.034655, 6.570457),
+  //     LatLng(36.034488, 6.572595),
+  //     LatLng(36.033969, 6.573247),
+  //     LatLng(36.021076, 6.567990),
+  //     LatLng(36.021369, 6.566466),
+  //     LatLng(36.021792, 6.562475),
+  //     LatLng(36.021657, 6.563483),
+  //   ];
+  //
+  //   // تحويل النقاط إلى نص الـ OSRM
+  //   final coords = loopWaypoints.map((p) => "${p.longitude},${p.latitude}").join(";");
+  //
+  //   final url = "https://router.project-osrm.org/route/v1/driving/$coords?overview=full&geometries=geojson";
+  //
+  //   final res = await http.get(Uri.parse(url));
+  //   final data = json.decode(res.body);
+  //   final routeCoords = data['routes'][0]['geometry']['coordinates'];
+  //
+  //   setState(() {
+  //     loopRoutePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
+  //   });
+  //   await saveRouteToFirebase('bus', loopRoutePoints);
+  // }
+  //
+  // void fetchRouteWithWaypoints() async {
+  //   // نقاط الطريق (Waypoints)
+  //   final waypoints = [
+  //     LatLng(36.021369, 6.566466), // البداية
+  //     LatLng(36.021076, 6.567990), // نقطة وسطى
+  //     LatLng(36.034488, 6.572595), // النهاية
+  //   ];
+  //
+  //   // إنشاء سلسلة الإحداثيات بالشكل المطلوب من OSRM (lon,lat;lon,lat;...)
+  //   final coords = waypoints.map((p) => "${p.longitude},${p.latitude}").join(";");
+  //
+  //   final url = "https://router.project-osrm.org/route/v1/driving/$coords?overview=full&geometries=geojson";
+  //
+  //   final res = await http.get(Uri.parse(url));
+  //   final data = json.decode(res.body);
+  //   final routeCoords = data['routes'][0]['geometry']['coordinates'];
+  //
+  //   setState(() {
+  //     routePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
+  //   });
+  //   await saveRouteToFirebase('taxi', routePoints);
+  //
+  // }
+
   void _toggleFavpoint (double lag,double lat, String plase) async {
     List<String> fave =['$plase','$lat','$lag'];
     final uid = FirebaseAuth.instance.currentUser!.uid;
@@ -113,21 +311,27 @@ class HomePageState extends State<HomePage> {
 
   }
 
-  void _handleMapTap(LatLng tappedPoint)async{
+  void _handleMapTapOSM(LatLng point) async {
     setState(() {
       _markers.clear();
       _markers.add(
-          Marker(
-            markerId:  const MarkerId('selected_point'),
-            position: tappedPoint,
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-          )
+        Marker(
+          point: point,
+          width: 40,
+          height: 40,
+          child: const Icon(
+            Icons.location_on,
+            color: Colors.blue,
+            size: 40,
+          ),
+        ),
       );
     });
-    try{
+
+    try {
       List<Placemark> placemarks = await placemarkFromCoordinates(
-        tappedPoint.latitude,
-        tappedPoint.longitude,
+        point.latitude,
+        point.longitude,
       );
 
       if (placemarks.isNotEmpty) {
@@ -135,65 +339,55 @@ class HomePageState extends State<HomePage> {
         final address =
             "${place.name ?? ''}, ${place.locality ?? ''}, ${place.country ?? ''}";
 
-
         setState(() {
-          _selectedPoint = tappedPoint;
+          _selectedPoint = point;
           _selectedAddress = address;
           _showBottomInfo = true;
-          _markers.clear();
-          _markers.add(
-            Marker(
-              markerId: const MarkerId('selected_point'),
-              position: tappedPoint,
-              infoWindow: InfoWindow(title: place.name ?? "Unknown", snippet: address),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-            ),
-          );
         });
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("حدث خطأ أثناء جلب المعلومات من Google")),
+        const SnackBar(content: Text("حدث خطأ أثناء جلب العنوان")),
       );
     }
   }
-  void  moveCameraTo (double lat, double lng, String name)async{
-    final LatLng target = LatLng(lat, lng);
-    if (!_controller.isCompleted) {
-      await Future.doWhile(() async {
-        await Future.delayed(const Duration(milliseconds: 300));
-        return !_controller.isCompleted;
-      });
-    }
-    final controller = await _controller.future;
-    await controller.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: target, zoom: 17, tilt: 45, bearing: 30),
-      ),
-    );
-    setState(() {
-      _markers.clear();
-      _markers.add(
+  void moveCameraTo(double lat, double lng, String name) {
+    final target = LatLng(lat, lng);
+    _mapController.move(target, 18);
+
+    Future.delayed(Duration(milliseconds: 50), () {
+      setState(() {
+        _markers.clear();
+        _markers.add(
           Marker(
-              markerId: MarkerId(name),
-              icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed),
-              position: target,
-              infoWindow: InfoWindow(title: name,)
-          )
-      );
+            point: target,
+            width: 40,
+            height: 40,
+            child: const Icon(
+              Icons.location_on,
+              color: Colors.red,
+              size: 40,
+            ),
+          ),
+        );
+      });
     });
   }
-  void _zoomIn()async {
-    final zoom = await _mapController?.getZoomLevel() ?? _zoomLevel;
-    final newZoom = zoom + 1;
-    _mapController?.animateCamera(CameraUpdate.zoomTo(newZoom));
+
+
+  void _zoomIn() {
+    _mapController.move(
+      _mapController.camera.center,
+      _mapController.camera.zoom + 1,
+    );
   }
 
   void _zoomOut()async {
-    final zoom = await _mapController?.getZoomLevel() ?? _zoomLevel;
-    final newZoom = zoom - 1;
-    _mapController?.animateCamera(CameraUpdate.zoomTo(newZoom));
 
+    _mapController.move(
+      _mapController.camera.center,
+      _mapController.camera.zoom -1,
+    );
   }
 
   void _goToMyLocation() async {
@@ -231,11 +425,11 @@ class HomePageState extends State<HomePage> {
       desiredAccuracy: LocationAccuracy.high,
     );
     final LatLng myPosition = LatLng(position.latitude, position.longitude);
-    _mapController?.animateCamera(
-      CameraUpdate.newCameraPosition(
-        CameraPosition(target: myPosition, zoom: 17),
-      ),
+    _mapController.move(
+      myPosition,
+      17,
     );
+
   }
 
   Future<void> _checkPermission() async {
@@ -251,10 +445,6 @@ class HomePageState extends State<HomePage> {
     }
   }
 
-  CameraPosition _currentCameraPosition = CameraPosition(
-    target: LatLng(lastLat, lastLng),
-    zoom: 12,
-  );
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -315,21 +505,21 @@ class HomePageState extends State<HomePage> {
           ),
         ],
         leading: Builder(
-          builder: (context) {
-            return Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: GestureDetector(
-                onTap: (){
-                  Scaffold.of(context).openDrawer();
-                },
-                child: CircleAvatar(
-                  backgroundImage: imgpathe != null
-                      ? CachedNetworkImageProvider(imgpathe!)
-                      : AssetImage('assets/images/acont_defalt.jpg') as ImageProvider,
+            builder: (context) {
+              return Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: GestureDetector(
+                  onTap: (){
+                    Scaffold.of(context).openDrawer();
+                  },
+                  child: CircleAvatar(
+                    backgroundImage: imgpathe != null
+                        ? CachedNetworkImageProvider(imgpathe!)
+                        : AssetImage('assets/images/acont_defalt.jpg') as ImageProvider,
+                  ),
                 ),
-              ),
-            );
-          }
+              );
+            }
         ),
       ),
       drawer: Drawer(
@@ -339,95 +529,118 @@ class HomePageState extends State<HomePage> {
       ),
       body:  Stack(
           children: [
-            GoogleMap(
-               onTap: _handleMapTap,
-              onMapCreated: (controller){
+            FlutterMap(
+              mapController: _mapController,
+              options: MapOptions(
+                initialCenter: LatLng(lastLat, lastLng),
+                initialZoom: 18,
 
-                _mapController = controller;
-                if (!_controller.isCompleted) {
-                  _controller.complete(controller);
-                }
-              },
-              initialCameraPosition: CameraPosition(
-                target: LatLng(lastLat, lastLng),
-                zoom: 12,
+                onTap: (tapPosition, point) {
+                  _handleMapTapOSM(point);
+                },
+
+                onPositionChanged: (position, hasGesture) {
+                  if (position.center != null) {
+                    lastLat = position.center!.latitude;
+                    lastLng = position.center!.longitude;
+                  }
+                },
               ),
+              children: [
+                TileLayer(
+                  urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                  userAgentPackageName: 'com.example.transport_assistant',
+                ),
 
-              zoomGesturesEnabled: true,
-              scrollGesturesEnabled: true,
-              rotateGesturesEnabled: true,
-              tiltGesturesEnabled: true,
-              onCameraMove: (position) {
-                _currentCameraPosition = position;
-                lastLat = position.target.latitude;
-                lastLng = position.target.longitude;
-              },
-              myLocationEnabled: true,
-              myLocationButtonEnabled: false,
-              zoomControlsEnabled: false,
-              mapType: MapType.hybrid,
-              markers: _markers,
+                MarkerLayer(markers: _markers),
+                if (routePoints.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: routePoints,
+                        color: Colors.blue,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (loopRoutePoints.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: loopRoutePoints,
+                        color: Colors.red, // اختر لون مختلف عن المسار الأول
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+
+                if (Selection == 1)
+                  MarkerLayer(markers: _taxiMarkers),
+
+                if (Selection == 3)
+                  MarkerLayer(markers: _busMarkers),
+              ],
             ),
             if(_showBottomInfo && _selectedAddress !=null)
-    DraggableScrollableSheet(
-      initialChildSize: 0.25,
-      minChildSize: 0.2,
-      maxChildSize: 0.7,
-      builder: (context,scrollController){
-        return Container(
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 100.0,top: 40),
-            child: ListView(
-              controller:scrollController,
-              children: [
-                Text('📍 $_selectedAddress'),
-                Row(
-                  children: [
+              DraggableScrollableSheet(
+                initialChildSize: 0.25,
+                minChildSize: 0.2,
+                maxChildSize: 0.7,
+                builder: (context,scrollController){
+                  return Container(
+                    color: Colors.white,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 100.0,top: 40),
+                      child: ListView(
+                          controller:scrollController,
+                          children: [
+                            Text('📍 $_selectedAddress'),
+                            Row(
+                              children: [
 
-                    IconButton(
-                        onPressed: (){
-                          if(_selectedPoint != null && _selectedAddress != null){
-                            _toggleFavpoint(_selectedPoint!.longitude,_selectedPoint!.latitude, _selectedAddress!);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                                content:Text("تمت الإضافة إلى المفضلة!",),
-                            ));
+                                IconButton(
+                                    onPressed: (){
+                                      if(_selectedPoint != null && _selectedAddress != null){
+                                        _toggleFavpoint(_selectedPoint!.longitude,_selectedPoint!.latitude, _selectedAddress!);
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                          content:Text("تمت الإضافة إلى المفضلة!",),
+                                        ));
 
-                          }
-                        },
-                        icon: Icon(Icons.favorite_outline_sharp,size: 20,color: Colors.redAccent,)
+                                      }
+                                    },
+                                    icon: Icon(Icons.favorite_outline_sharp,size: 20,color: Colors.redAccent,)
+                                ),
+                                SizedBox(width: 8,),
+                                IconButton(
+                                    onPressed: (){
+                                      if(_selectedPoint != null && _selectedAddress != null){
+                                        _toggleSavepoint(_selectedPoint!.longitude,_selectedPoint!.latitude, _selectedAddress!);
+                                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                                          content:Text("تمت الإضافة إلى المحفوضة!",),
+                                        ));
+
+                                      }
+                                    },
+                                    icon: Icon(Icons.save_rounded,size: 20,color: Colors.greenAccent,)
+                                ),
+                                IconButton(
+                                    onPressed: (){
+                                      setState(() {
+                                        _showBottomInfo = false;
+                                      });
+
+                                    },
+                                    icon: Icon(Icons.clear,size: 20,color: Colors.red,)
+                                ),
+                              ],
+                            ),
+                          ]
+                      ),
                     ),
-                    SizedBox(width: 8,),
-                    IconButton(
-                        onPressed: (){
-                          if(_selectedPoint != null && _selectedAddress != null){
-                            _toggleSavepoint(_selectedPoint!.longitude,_selectedPoint!.latitude, _selectedAddress!);
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-                              content:Text("تمت الإضافة إلى المحفوضة!",),
-                            ));
+                  );
 
-                          }
-                        },
-                        icon: Icon(Icons.save_rounded,size: 20,color: Colors.greenAccent,)
-                    ),
-                    IconButton(
-                        onPressed: (){
-                          setState(() {
-                            _showBottomInfo = false;
-                          });
-
-                        },
-                        icon: Icon(Icons.clear,size: 20,color: Colors.red,)
-                    ),
-                  ],
-                ),
-            ]
-            ),
-          ),
-        );
-
-      },
-    ),
+                },
+              ),
             Positioned(
               bottom: 100,
               right: 10,
@@ -502,12 +715,11 @@ class HomePageState extends State<HomePage> {
                   ),
                 ],
                 selected: <int>{Selection},
-                onSelectionChanged: (newSelection) {
-                  setState(() {
-                    Selection = newSelection.first;
-                  });
-                  //هنا نزيدو ونبعد الختيار تاعها   بيس ول تاكسي زل واشيدير
+                onSelectionChanged: (newSelection) async {
+                  await changeSelection(newSelection.first);
                 },
+
+
               ),
             ),
             AnimatedPositioned(
@@ -535,20 +747,16 @@ class HomePageState extends State<HomePage> {
                         if (value.isEmpty) return;
 
                         try {
-                          // البحث عن الموقع بالاسم
                           List<Location> locations = await locationFromAddress(value);
                           if (locations.isNotEmpty) {
                             final loc = locations.first;
                             _toggleregistorpoint(loc.longitude, loc.latitude, value);
 
-                            _mapController?.animateCamera(
-                              CameraUpdate.newCameraPosition(
-                                CameraPosition(
-                                  target: LatLng(loc.latitude, loc.longitude),
-                                  zoom: 14,
-                                ),
-                              ),
+                            _mapController.move(
+                              LatLng(loc.latitude, loc.longitude),
+                              14,
                             );
+
                           }
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(

@@ -5,26 +5,28 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:transport_assistant/ui_pages/acount/drwer_acount.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+
+import '../line_type.dart';
 class LinePage extends StatefulWidget {
   const LinePage({super.key, this.onGoToMap});
-  final VoidCallback? onGoToMap;
+  final Function(LineType)? onGoToMap;
+
   @override
   State<LinePage> createState() => _LinePageState();
 }
 
 class _LinePageState extends State<LinePage> {
-
-
-
-
-
   @override
   void initState() {
     super.initState();
-    loadUserImage();
-    loddelins();
-    loddelinsFav();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      loddelins();
+      loddelinsFav();
+      loadUserImage();
+    });
   }
+
   String? imgpathe;
   List<List<String>> lines = [];
   List<List<String>> linesFav = [];
@@ -112,12 +114,12 @@ class _LinePageState extends State<LinePage> {
         return Icons.directions;
     }
   }
-
-  void _toMap (){
-   if (widget.onGoToMap != null){
-     widget.onGoToMap! ();
-   }
-  }
+  //
+  // void _toMap (){
+  //  if (widget.onGoToMap != null){
+  //    widget.onGoToMap! ();
+  //  }
+  // }
   void _toggleFavorite (List<String> line) async
   {
     final type = line[0];
@@ -252,8 +254,17 @@ class _LinePageState extends State<LinePage> {
                              child: Icon(getIcon(type), color: Colors.red, size: 28),
                            ),
                           title:  Text(name.tr(),style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold,color: Colors.white,),),
-                          onTap: _toMap,
-                          trailing: IconButton(
+                      onTap: () {
+                        if (widget.onGoToMap != null) {
+                          if (type == 'taxi') {
+                            widget.onGoToMap!(LineType.taxi);
+                          } else if (type == 'bus') {
+                            widget.onGoToMap!(LineType.bus);
+                          }
+                        }
+                      },
+
+                      trailing: IconButton(
                               onPressed: () => _toggleFavorite(line),
                               icon: Icon(
                                 isFav ? Icons.favorite : Icons.favorite_border,
@@ -291,16 +302,26 @@ class _LinePageState extends State<LinePage> {
                           child: Icon(getIcon(type), color: Colors.red, size: 28),
                         ),
                         title:  Text(name.tr(), style: TextStyle(fontSize: 25,fontWeight: FontWeight.bold,color: Colors.white,),),
-                        onTap: _toMap,
+                        onTap: () {
+                          if (widget.onGoToMap != null) {
+                            if (type == 'taxi') {
+                              widget.onGoToMap!(LineType.taxi);
+                            } else if (type == 'bus') {
+                              widget.onGoToMap!(LineType.bus);
+                            }
+                          }
+                        },
+
                         trailing: CircleAvatar(
                           backgroundColor: Colors.white,
                           child: IconButton(
 
                             icon: const Icon(Icons.close, color: Colors.red),
                             onPressed: () async{
+                              final uid = FirebaseAuth.instance.currentUser!.uid;
                               final docRef = FirebaseFirestore.instance
-                                  .collection('publicData')
-                                  .doc('linesFav');
+                                  .collection('linsFav')
+                                  .doc(uid);
                               var snapshot = await docRef.get();
                               Map<String, dynamic> favData = snapshot.data() ?? {};
                               String keyToRemove = favData.keys.elementAt(index);
@@ -316,10 +337,7 @@ class _LinePageState extends State<LinePage> {
 
                     );
                   },
-
-
                 ),
-
           ]
         ),
       ),

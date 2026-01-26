@@ -5,6 +5,8 @@ import 'package:transport_assistant/ui_pages/line_page.dart';
 import 'package:transport_assistant/ui_pages/opshns_page.dart';
 import 'package:easy_localization/easy_localization.dart';
 
+import 'line_type.dart';
+
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
@@ -14,7 +16,8 @@ void main() async{
     path: 'assets/lang',
     fallbackLocale:  Locale('en'),
     child:  MyApp(),
-  ),);
+  ),
+  );
 
 }
 
@@ -43,17 +46,40 @@ class _MyAppState extends State<MyApp> {
       _themeMode = isDark ? ThemeMode.dark : ThemeMode.light;
     });
   }
+  // void _goTorout(double lat, double lng, String name) {
+  //   _onchingde(0); // الانتقال إلى الصفحة الرئيسية
+  //   Future.delayed(const Duration(milliseconds: 2000), () {
+  //     _homeKey.currentState?.moveCameraTo(lat, lng, name);
+  //   });
+  // }
   void _goToMap(double lat, double lng, String name) {
     _onchingde(0); // الانتقال إلى الصفحة الرئيسية
     Future.delayed(const Duration(milliseconds: 2000), () {
       _homeKey.currentState?.moveCameraTo(lat, lng, name);
     });
   }
+  void goTolinintMap(LineType type) {
+    _onchingde(0); // الانتقال إلى HomePage
+
+    Future.delayed(const Duration(milliseconds: 500), () async {
+      final home = _homeKey.currentState;
+      if (home == null) return;
+
+      switch (type) {
+        case LineType.taxi:
+          home.changeSelection(1);
+          break;
+
+        case LineType.bus:
+          home.changeSelection(3);
+          break;
+      }
+    });
+  }
+
   void _onchingde(int indxe){
     setState(() {
       _slctedindex = indxe;
-
-
     });
     _pageController.animateToPage(
       indxe,
@@ -67,7 +93,9 @@ class _MyAppState extends State<MyApp> {
     final List<Widget>screns=<Widget>[
 
       HomePage(key: _homeKey,onLocaleChanged: changeLocale),
-      LinePage(onGoToMap:()  => _onchingde(0),),
+      LinePage(
+        onGoToMap: goTolinintMap,
+      ),
       Optionspage(onGoToMap: _goToMap,
         onThemeChanged: _toggleTheme,
         isDark: _themeMode == ThemeMode.dark,

@@ -1,0 +1,4 @@
+enum LineType {
+  bus,
+  taxi,
+}
