@@ -15,6 +15,30 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+List<LatLng> getPolylinePoints(Map<String, dynamic> json) {
+  List points = json['data']['segment_points'];
+
+  return points.map((point) {
+    return LatLng(point['lat'], point['lng']);
+  }).toList();
+}
+class RouteRequest {
+  double? lat1;
+  double? long1;
+  double? lat2;
+  double? long2;
+  String? document;
+
+  Map<String, dynamic> toJson() {
+    return {
+      "lat1": lat1,
+      "long1": long1,
+      "lat2": lat2,
+      "long2": long2,
+      "document": document,
+    };
+  }
+}
 
 double lastLat = 36.021284;
 double lastLng = 6.567206;
@@ -28,8 +52,14 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  LatLng? startPointSelected;
+  LatLng? endPointSelected;
+  bool start =false;
+  bool And =false;
+  RouteRequest routeRequest = RouteRequest();
   int Selection = 3;
   LatLng? _selectedPoint;
+  LatLng? Point;
   String? _selectedAddress;
   bool _showBottomInfo = false;
   final MapController _mapController = MapController();
@@ -41,6 +71,21 @@ class HomePageState extends State<HomePage> {
   List<LatLng> routePoints = [];
    List<Marker> _taxiMarkers = [];
    List<Marker> _busMarkers = [];
+  Future sendData(RouteRequest routeRequest) async {
+    final response = await http.post(
+      Uri.parse("http://10.222.16.227:5000/route"),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode(routeRequest.toJson()),
+    );
+    final data = jsonDecode(response.body);
+    List<LatLng> polylinePoints = getPolylinePoints(data);
+
+    setState(() {
+          routePoints = polylinePoints;
+         });
+
+    return polylinePoints;
+  }
   @override
   void initState() {
     super.initState();
@@ -89,6 +134,8 @@ class HomePageState extends State<HomePage> {
         if (_taxiMarker.isNotEmpty) {
           _mapController.move(_taxiMarker.first, 18);
         }
+        routeRequest.document = "taxi";
+
         break;
 
       case 3:
@@ -97,6 +144,7 @@ class HomePageState extends State<HomePage> {
         if (_busMarker.isNotEmpty) {
           _mapController.move(_busMarker.first, 18);
         }
+        routeRequest.document = "bus";
         break;
     }
   }
@@ -190,6 +238,7 @@ class HomePageState extends State<HomePage> {
 
   // await saveRouteToFirebase('bus', busStops);
   // void fetchLoopRoute() async {
+  // هاذي ليستا لموها يدويا  تع النقاط المتوقة لل   خط نقل
   //   final loopWaypoints = [
   //     LatLng(36.021657, 6.563483),
   //     LatLng(36.021427, 6.566844),
@@ -403,7 +452,6 @@ class HomePageState extends State<HomePage> {
       );
       return;
     }
-
     // 🔹 تحقق من الصلاحيات
     permission = await Geolocator.checkPermission();
     if (permission == LocationPermission.denied) {
@@ -537,6 +585,17 @@ class HomePageState extends State<HomePage> {
 
                 onTap: (tapPosition, point) {
                   _handleMapTapOSM(point);
+                  setState(() {
+                    if (start) {
+                      startPointSelected = point;
+                      routeRequest.lat1 = point.latitude;
+                      routeRequest.long1 = point.longitude;
+                    } else if (And) {
+                      endPointSelected = point;
+                      routeRequest.lat2 = point.latitude;
+                      routeRequest.long2 = point.longitude;
+                    }
+                  });
                 },
 
                 onPositionChanged: (position, hasGesture) {
@@ -634,6 +693,39 @@ class HomePageState extends State<HomePage> {
                                 ),
                               ],
                             ),
+                            Row(
+                              children: [
+                                Text('Start point'),
+                                SizedBox(width: 8,),
+                                Checkbox(
+                                  value: start,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      start = value!;
+                                      if(start) And =false;
+                                    });
+                                  },
+                                ),
+                                Text('end point'),
+                                SizedBox(width: 8,),
+                                Checkbox(
+                                  value: And,
+                                  onChanged: (value) {
+                                    setState(() {
+                                      And = value!;
+                                      if(And) start =false;
+                                    });
+                                  },
+                                ),
+                              ],
+                            ),
+                            ElevatedButton(
+                                onPressed: () async{
+                                  await sendData(routeRequest);
+                                },
+                                child: Text('get line')
+                            ),
+
                           ]
                       ),
                     ),
@@ -641,6 +733,17 @@ class HomePageState extends State<HomePage> {
 
                 },
               ),
+            // Positioned(
+            //   left: 10,
+            //     bottom: 300,
+            //     child:
+            // ),
+            // Positioned(
+            //   left: 10,
+            //     bottom: 250,
+            //     child:
+            //
+            // ),
             Positioned(
               bottom: 100,
               right: 10,
@@ -788,10 +891,10 @@ class HomePageState extends State<HomePage> {
                 ),
               ),
             ),
-
           ]
-
       ),
     );
   }
 }
+
+

@@ -4,7 +4,6 @@ import 'package:transport_assistant/ui_pages/home_page.dart';
 import 'package:transport_assistant/ui_pages/line_page.dart';
 import 'package:transport_assistant/ui_pages/opshns_page.dart';
 import 'package:easy_localization/easy_localization.dart';
-
 import 'line_type.dart';
 
 void main() async{
