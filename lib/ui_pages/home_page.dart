@@ -8,6 +8,7 @@ import 'package:transport_assistant/Data/saved_pints.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart' as Places;
 import 'dart:async';
 import '../Data/favorite_points.dart';
 import 'acount/drwer_acount.dart';
@@ -16,11 +17,20 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 List<LatLng> getPolylinePoints(Map<String, dynamic> json) {
-  List points = json['data']['segment_points'];
+  List points = json['data']['full_route'];
 
   return points.map((point) {
     return LatLng(point['lat'], point['lng']);
   }).toList();
+}
+List<LatLng> getmarkerlinePoints(Map<String, dynamic> json) {
+  final boarding = json['data']['boarding_station'];
+  final dropoff = json['data']['dropoff_station'];
+
+  return [
+    LatLng(boarding['latitude'], boarding['longitude']),
+    LatLng(dropoff['latitude'], dropoff['longitude']),
+  ];
 }
 class RouteRequest {
   double? lat1;
@@ -52,25 +62,29 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
+  get places => Places.FlutterGooglePlacesSdk("AIzaSyDZVdJ8p-DXct1HPgvKcj_5GBDMWi5hVd8");
   LatLng? startPointSelected;
   LatLng? endPointSelected;
   bool start =false;
   bool And =false;
   RouteRequest routeRequest = RouteRequest();
-  int Selection = 3;
+  int Selection = 1 ;
   LatLng? _selectedPoint;
   LatLng? Point;
   String? _selectedAddress;
   bool _showBottomInfo = false;
   final MapController _mapController = MapController();
-  final List<Marker> _markers = [];
   bool _showSearch = false;
   final TextEditingController _searchController = TextEditingController();
   final LatLng startPoint = LatLng(36.021369, 6.566466);
   final LatLng endPoint = LatLng(36.034488, 6.572595);
   List<LatLng> routePoints = [];
-   List<Marker> _taxiMarkers = [];
-   List<Marker> _busMarkers = [];
+  List<Marker> taxiMarkers = [];
+  List<Marker> busMarkers = [];
+  List<Marker> tramMarkers = [];
+  List<Marker> visibleMarkers = [];
+   List<Marker> _Markers = [];
+  List<Places.AutocompletePrediction> predictions = [];
   Future sendData(RouteRequest routeRequest) async {
     final response = await http.post(
       Uri.parse("http://10.222.16.227:5000/route"),
@@ -79,11 +93,12 @@ class HomePageState extends State<HomePage> {
     );
     final data = jsonDecode(response.body);
     List<LatLng> polylinePoints = getPolylinePoints(data);
-
+    List<LatLng> markerPoints = getmarkerlinePoints(data);
     setState(() {
           routePoints = polylinePoints;
+         _Marker= markerPoints;
          });
-
+    await buildMarkers('bus');
     return polylinePoints;
   }
   @override
@@ -124,53 +139,53 @@ class HomePageState extends State<HomePage> {
     setState(() {
       Selection = newSelection;
       routePoints.clear();
-      loopRoutePoints.clear();
     });
-
     switch (Selection) {
       case 1:
-        await loadTaxiRoute();
-        buildTaxiMarkers();
-        if (_taxiMarker.isNotEmpty) {
-          _mapController.move(_taxiMarker.first, 18);
-        }
+        await loadRoute('taxi');
         routeRequest.document = "taxi";
-
         break;
-
+      case 2:
+        await loadRoute('tram');
+        routeRequest.document = "tram";
+        break;
       case 3:
-        await loadBusRoute();
-        buildBusMarkers();
-        if (_busMarker.isNotEmpty) {
-          _mapController.move(_busMarker.first, 18);
-        }
+        await loadRoute('bus');
         routeRequest.document = "bus";
         break;
     }
   }
 
-  Future<void> loadTaxiRoute() async {
-    final points = await loadRouteFromFirebase('taxi','routes');
-    final markers = await loadRouteFromFirebase('taxi','markers');
+  Future<void> loadRoute(
+      String type,
+      ) async {
+    final points = await loadRouteFromFirebase(type,'routes');
+    //final points =line1;
+    final markers = await loadRouteFromFirebase(type,'markers');
     setState(() {
       routePoints = points;
-      _taxiMarker= markers;
-    });
-  }
-  Future<void> loadBusRoute() async {
-    final points = await loadRouteFromFirebase('bus','routes');
-    final marker = await loadRouteFromFirebase('bus','markers');
-
-    setState(() {
-      loopRoutePoints = points;
-      _busMarker= marker;
+      _Marker = markers;
     });
 
+    await buildMarkers(type);
+    if (_Marker.isNotEmpty) {
+      _mapController.move(_Marker.first, 18);
+    }
   }
+  // Future<void> loadBusRoute() async {
+  //   final points = await loadRouteFromFirebase('bus','routes');
+  //   final marker = await loadRouteFromFirebase('bus','markers');
+  //
+  //   setState(() {
+  //     loopRoutePoints = points;
+  //     _busMarker= marker;
+  //   });
+  //
+  // }
 
-  List<LatLng> loopRoutePoints = [];
-  List<LatLng> _taxiMarker = [];
-  List<LatLng> _busMarker = [];
+
+  List<LatLng> _Marker = [];
+
 
   // Future<void> saveRouteToFirebase(
   //     String type,
@@ -188,119 +203,103 @@ class HomePageState extends State<HomePage> {
   //       .doc(type)
   //       .set({'points': data});
   // }
+  Future<void> buildMarkers(String type) async {
+    List<Marker> temp = [];
 
-  Future<void> buildTaxiMarkers() async {
-    _taxiMarkers.clear();
-
-
-
-    for (int i = 0; i < _taxiMarker.length; i++) {
-      _taxiMarkers.add(
+    for (int i = 0; i < _Marker.length; i++) {
+      temp.add(
         Marker(
-          point: _taxiMarker[i],
+          point: _Marker[i],
           width: 40,
           height: 40,
           child: CircleAvatar(
-            backgroundColor: Colors.black54,
+            backgroundColor:  Colors.black45,
             child: Icon(
-              Icons.local_taxi,
+              type == "taxi"
+                  ? Icons.local_taxi
+                  : type == "bus"
+                  ? Icons.directions_bus
+                  : Icons.train,
               color: Colors.greenAccent,
-              size: 30,
             ),
           ),
         ),
       );
     }
-    // await saveRouteToFirebase('taxi', taxiStops);
-  }
-  Future<void> buildBusMarkers() async {
+
     setState(() {
-      _busMarkers.clear();
-      for (int i = 0; i < _busMarker.length; i++) {
-        _busMarkers.add(
-          Marker(
-            point: _busMarker[i],
-            width: 40,
-            height: 40,
-            child: CircleAvatar(
-              backgroundColor: Colors.black54,
-              child: Icon(
-                Icons.directions_bus,
-                color: Colors.greenAccent,
-                size: 30,
-              ),
-            ),
-          ),
-        );
-      }
+      if (type == "taxi") taxiMarkers = temp;
+      if (type == "bus") busMarkers = temp;
+      if (type == "tram") tramMarkers = temp;
+
+      visibleMarkers = temp; // 👈 هذا المهم
     });
   }
-
   // await saveRouteToFirebase('bus', busStops);
-  // void fetchLoopRoute() async {
+  void fetchLoopRoute() async {
   // هاذي ليستا لموها يدويا  تع النقاط المتوقة لل   خط نقل
-  //   final loopWaypoints = [
-  //     LatLng(36.021657, 6.563483),
-  //     LatLng(36.021427, 6.566844),
-  //     LatLng(36.021902, 6.567370),
-  //     LatLng(36.02312, 6.57233),
-  //     LatLng(36.040394, 6.574727),
-  //     LatLng(36.043942, 6.567464),
-  //     LatLng(36.042003, 6.567560),
-  //     LatLng(36.041860, 6.563918),
-  //     LatLng(36.040229, 6.563816),
-  //     LatLng(36.039713, 6.565136),
-  //     LatLng(36.039179, 6.565999),
-  //     LatLng(36.038351, 6.566638),
-  //     LatLng(36.037596, 6.567078),
-  //     LatLng(36.035904, 6.568000),
-  //     LatLng(36.034655, 6.570457),
-  //     LatLng(36.034488, 6.572595),
-  //     LatLng(36.033969, 6.573247),
-  //     LatLng(36.021076, 6.567990),
-  //     LatLng(36.021369, 6.566466),
-  //     LatLng(36.021792, 6.562475),
-  //     LatLng(36.021657, 6.563483),
-  //   ];
-  //
-  //   // تحويل النقاط إلى نص الـ OSRM
-  //   final coords = loopWaypoints.map((p) => "${p.longitude},${p.latitude}").join(";");
-  //
-  //   final url = "https://router.project-osrm.org/route/v1/driving/$coords?overview=full&geometries=geojson";
-  //
-  //   final res = await http.get(Uri.parse(url));
-  //   final data = json.decode(res.body);
-  //   final routeCoords = data['routes'][0]['geometry']['coordinates'];
-  //
-  //   setState(() {
-  //     loopRoutePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
-  //   });
-  //   await saveRouteToFirebase('bus', loopRoutePoints);
-  // }
-  //
-  // void fetchRouteWithWaypoints() async {
-  //   // نقاط الطريق (Waypoints)
-  //   final waypoints = [
-  //     LatLng(36.021369, 6.566466), // البداية
-  //     LatLng(36.021076, 6.567990), // نقطة وسطى
-  //     LatLng(36.034488, 6.572595), // النهاية
-  //   ];
-  //
-  //   // إنشاء سلسلة الإحداثيات بالشكل المطلوب من OSRM (lon,lat;lon,lat;...)
-  //   final coords = waypoints.map((p) => "${p.longitude},${p.latitude}").join(";");
-  //
-  //   final url = "https://router.project-osrm.org/route/v1/driving/$coords?overview=full&geometries=geojson";
-  //
-  //   final res = await http.get(Uri.parse(url));
-  //   final data = json.decode(res.body);
-  //   final routeCoords = data['routes'][0]['geometry']['coordinates'];
-  //
-  //   setState(() {
-  //     routePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
-  //   });
-  //   await saveRouteToFirebase('taxi', routePoints);
-  //
-  // }
+    final loopWaypoints = [
+      LatLng(36.021657, 6.563483),
+      LatLng(36.021427, 6.566844),
+      LatLng(36.021902, 6.567370),
+      LatLng(36.02312, 6.57233),
+      LatLng(36.040394, 6.574727),
+      LatLng(36.043942, 6.567464),
+      LatLng(36.042003, 6.567560),
+      LatLng(36.041860, 6.563918),
+      LatLng(36.040229, 6.563816),
+      LatLng(36.039713, 6.565136),
+      LatLng(36.039179, 6.565999),
+      LatLng(36.038351, 6.566638),
+      LatLng(36.037596, 6.567078),
+      LatLng(36.035904, 6.568000),
+      LatLng(36.034655, 6.570457),
+      LatLng(36.034488, 6.572595),
+      LatLng(36.033969, 6.573247),
+      LatLng(36.021076, 6.567990),
+      LatLng(36.021369, 6.566466),
+      LatLng(36.021792, 6.562475),
+      LatLng(36.021657, 6.563483),
+    ];
+
+    // تحويل النقاط إلى نص الـ OSRM
+    final coords = loopWaypoints.map((p) => "${p.longitude},${p.latitude}").join(";");
+
+    final url = "https://router.project-osrm.org/route/v1/driving/$coords?overview=full&geometries=geojson";
+
+    final res = await http.get(Uri.parse(url));
+    final data = json.decode(res.body);
+    final routeCoords = data['routes'][0]['geometry']['coordinates'];
+
+    setState(() {
+      routePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
+    });
+    // await saveRouteToFirebase('bus', routePoints);
+  }
+
+  void fetchRouteWithWaypoints() async {
+    // نقاط الطريق (Waypoints)
+    final waypoints = [
+      LatLng(36.021369, 6.566466), // البداية
+      LatLng(36.021076, 6.567990), // نقطة وسطى
+      LatLng(36.034488, 6.572595), // النهاية
+    ];
+
+    // إنشاء سلسلة الإحداثيات بالشكل المطلوب من OSRM (lon,lat;lon,lat;...)
+    final coords = waypoints.map((p) => "${p.longitude},${p.latitude}").join(";");
+
+    final url = "https://router.project-osrm.org/route/v1/driving/$coords?overview=full&geometries=geojson";
+
+    final res = await http.get(Uri.parse(url));
+    final data = json.decode(res.body);
+    final routeCoords = data['routes'][0]['geometry']['coordinates'];
+
+    setState(() {
+      routePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
+    });
+    // await saveRouteToFirebase('taxi', routePoints);
+
+  }
 
   void _toggleFavpoint (double lag,double lat, String plase) async {
     List<String> fave =['$plase','$lat','$lag'];
@@ -362,8 +361,8 @@ class HomePageState extends State<HomePage> {
 
   void _handleMapTapOSM(LatLng point) async {
     setState(() {
-      _markers.clear();
-      _markers.add(
+      _Markers.clear();
+      _Markers.add(
         Marker(
           point: point,
           width: 40,
@@ -406,8 +405,8 @@ class HomePageState extends State<HomePage> {
 
     Future.delayed(Duration(milliseconds: 50), () {
       setState(() {
-        _markers.clear();
-        _markers.add(
+        _Markers.clear();
+        _Markers.add(
           Marker(
             point: target,
             width: 40,
@@ -611,7 +610,8 @@ class HomePageState extends State<HomePage> {
                   userAgentPackageName: 'com.example.transport_assistant',
                 ),
 
-                MarkerLayer(markers: _markers),
+                MarkerLayer(markers: visibleMarkers),
+                MarkerLayer(markers: _Markers),
                 if (routePoints.isNotEmpty)
                   PolylineLayer(
                     polylines: [
@@ -622,22 +622,7 @@ class HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                if (loopRoutePoints.isNotEmpty)
-                  PolylineLayer(
-                    polylines: [
-                      Polyline(
-                        points: loopRoutePoints,
-                        color: Colors.red, // اختر لون مختلف عن المسار الأول
-                        strokeWidth: 4,
-                      ),
-                    ],
-                  ),
-
-                if (Selection == 1)
-                  MarkerLayer(markers: _taxiMarkers),
-
-                if (Selection == 3)
-                  MarkerLayer(markers: _busMarkers),
+                MarkerLayer(markers: visibleMarkers),
               ],
             ),
             if(_showBottomInfo && _selectedAddress !=null)
@@ -825,76 +810,90 @@ class HomePageState extends State<HomePage> {
 
               ),
             ),
-            AnimatedPositioned(
-              duration: const Duration(milliseconds: 300),
-              top: _showSearch ? kToolbarHeight : -2, // أسفل الـ AppBar مباشرة
-              left: 15,
-              right: 15,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 300),
-                opacity: _showSearch ? 1 : 0,
+            if (_showSearch)
+              Positioned(
+                top: kToolbarHeight,
+                left: 15,
+                right: 15,
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(12),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black26,
-                        blurRadius: 6,
-                        offset: Offset(0, 2),
-                      ),
-                    ],
+                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 2))],
                   ),
-                  child: TextField(
-                      onSubmitted:  (value) async {
-                        if (value.isEmpty) return;
-
-                        try {
-                          List<Location> locations = await locationFromAddress(value);
-                          if (locations.isNotEmpty) {
-                            final loc = locations.first;
-                            _toggleregistorpoint(loc.longitude, loc.latitude, value);
-
-                            _mapController.move(
-                              LatLng(loc.latitude, loc.longitude),
-                              14,
-                            );
-
+                  constraints: BoxConstraints(maxHeight: 300),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      TextField(
+                        onChanged: (value) async {
+                          if (value.isEmpty) {
+                            setState(() => predictions = []);
+                            return;
                           }
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("location_not_found".tr())),
+                          final result = await places.findAutocompletePredictions(
+                            value,
+                            countries: ["dz"],
                           );
-                        }
-                      },
-                      controller: _searchController,
-                      decoration: InputDecoration(
-                        hintText: "search_hint".tr(),
-                        prefixIcon: const Icon(Icons.search),
-                        suffixIcon: IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () {
-                            setState(() {
-                              _searchController.clear();
-                              _showSearch = false;
-                            });
-                          },
+                          setState(() => predictions = List.from(result.predictions));
+                        },
+                        controller: _searchController,
+                        decoration: InputDecoration(
+                          hintText: "search_hint".tr(),
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
                         ),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        filled: true,
-                        fillColor: Colors.grey[100],
+                      ),
+                      if (predictions.isNotEmpty)
+                        Flexible(
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: predictions.length,
+                            itemBuilder: (context, index) {
+                              final p = predictions[index];
+                              return ListTile(
+                                title: Text(p.fullText),
+                                onTap: () async {
+                                  final detail = await places.fetchPlace(
+                                    p.placeId,
+                                    fields: [Places.PlaceField.Location],
+                                  );
+                                  final lat = detail.place!.latLng!.lat;
+                                  final lng = detail.place!.latLng!.lng;
 
-                      )
+                                  _mapController.move(LatLng(lat, lng), 18);
+
+                                  setState(() {
+                                    predictions = [];
+                                    _showSearch = false;
+                                    _searchController.clear();
+
+                                    // ✅ أضف الـ marker
+                                    _Markers.clear();
+                                    _Markers.add(
+                                      Marker(
+                                        point: LatLng(lat, lng),
+                                        width: 60,
+                                        height: 60,
+                                        child: const Icon(
+                                          Icons.location_on,
+                                          color: Colors.red,
+                                          size: 60,
+                                        ),
+                                      ),
+                                    );
+                                  });
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                    ],
                   ),
                 ),
               ),
-            ),
           ]
       ),
     );
   }
 }
-
-
