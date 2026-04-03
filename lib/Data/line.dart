@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
-
 List<LatLng> line1 =[
   LatLng(36.776417, 3.259295),
   LatLng(36.776464, 3.259308),

@@ -3,6 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import 'package:transport_assistant/Data/line.dart';
 import 'package:transport_assistant/Data/register.dart';
 import 'package:transport_assistant/Data/saved_pints.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -136,9 +137,10 @@ class HomePageState extends State<HomePage> {
         .toList();
   }
   Future<void> changeSelection( int newSelection) async {
+    print("Selection: $newSelection");
     setState(() {
       Selection = newSelection;
-      routePoints.clear();
+      // routePoints.clear();
     });
     switch (Selection) {
       case 1:
@@ -160,13 +162,13 @@ class HomePageState extends State<HomePage> {
       String type,
       ) async {
     final points = await loadRouteFromFirebase(type,'routes');
-    //final points =line1;
+    //final points = line1;
     final markers = await loadRouteFromFirebase(type,'markers');
     setState(() {
       routePoints = points;
       _Marker = markers;
     });
-
+    //_mapController.move(routePoints.first, 15);
     await buildMarkers(type);
     if (_Marker.isNotEmpty) {
       _mapController.move(_Marker.first, 18);
@@ -609,8 +611,6 @@ class HomePageState extends State<HomePage> {
                   urlTemplate: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
                   userAgentPackageName: 'com.example.transport_assistant',
                 ),
-
-                MarkerLayer(markers: visibleMarkers),
                 MarkerLayer(markers: _Markers),
                 if (routePoints.isNotEmpty)
                   PolylineLayer(
@@ -869,7 +869,7 @@ class HomePageState extends State<HomePage> {
                                     _searchController.clear();
 
                                     // ✅ أضف الـ marker
-                                    _Markers.clear();
+                                    //_Markers.clear();
                                     _Markers.add(
                                       Marker(
                                         point: LatLng(lat, lng),
