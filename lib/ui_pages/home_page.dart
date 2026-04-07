@@ -3,13 +3,15 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
-import 'package:transport_assistant/Data/line.dart';
 import 'package:transport_assistant/Data/register.dart';
 import 'package:transport_assistant/Data/saved_pints.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart' as Places;
+import 'package:transport_assistant/lines_etusa/L89.dart';
+import 'package:transport_assistant/lines_etusa/dergana_harach_NL608.dart';
+import 'package:transport_assistant/lines_etusa/line_tram.dart';
 import 'dart:async';
 import '../Data/favorite_points.dart';
 import 'acount/drwer_acount.dart';
@@ -86,6 +88,7 @@ class HomePageState extends State<HomePage> {
   List<Marker> visibleMarkers = [];
    List<Marker> _Markers = [];
   List<Places.AutocompletePrediction> predictions = [];
+
   Future sendData(RouteRequest routeRequest) async {
     final response = await http.post(
       Uri.parse("http://10.222.16.227:5000/route"),
@@ -107,6 +110,7 @@ class HomePageState extends State<HomePage> {
     super.initState();
     _checkPermission();
     loadUserImage();
+    fetchLoopRoute();
   }
   String? imgpathe;
   loadUserImage() async {
@@ -161,11 +165,11 @@ class HomePageState extends State<HomePage> {
   Future<void> loadRoute(
       String type,
       ) async {
-    final points = await loadRouteFromFirebase(type,'routes');
-    //final points = line1;
+    //final points = await loadRouteFromFirebase(type,'routes');
+    final points = line1;
     final markers = await loadRouteFromFirebase(type,'markers');
     setState(() {
-      routePoints = points;
+      routePoints = [];
       _Marker = markers;
     });
     //_mapController.move(routePoints.first, 15);
@@ -189,22 +193,26 @@ class HomePageState extends State<HomePage> {
   List<LatLng> _Marker = [];
 
 
-  // Future<void> saveRouteToFirebase(
-  //     String type,
-  //     List<LatLng> points,
-  //     ) async {
-  //   final data = points
-  //       .map((p) => {
-  //     'lat': p.latitude,
-  //     'lng': p.longitude,
-  //   })
-  //       .toList();
-  //
-  //   await FirebaseFirestore.instance
-  //       .collection('markers')
-  //       .doc(type)
-  //       .set({'points': data});
-  // }
+  Future<void> saveRouteToFirebase(
+      String type,
+      List<LatLng> points,
+      ) async {
+    final data = points.map((p) => {
+      'lat': p.latitude,
+      'lng': p.longitude,
+    }).toList();
+    print('aaaaaaaaaaaaaaaaaaaa');
+    try {
+      await FirebaseFirestore.instance
+          .collection('routes')
+          .doc(type)
+          .set({'points': data});
+
+      print("✅ Saved successfully: $type");
+    } catch (e) {
+      print("❌ Firebase error: $e");
+    }
+  }
   Future<void> buildMarkers(String type) async {
     List<Marker> temp = [];
 
@@ -240,29 +248,7 @@ class HomePageState extends State<HomePage> {
   // await saveRouteToFirebase('bus', busStops);
   void fetchLoopRoute() async {
   // هاذي ليستا لموها يدويا  تع النقاط المتوقة لل   خط نقل
-    final loopWaypoints = [
-      LatLng(36.021657, 6.563483),
-      LatLng(36.021427, 6.566844),
-      LatLng(36.021902, 6.567370),
-      LatLng(36.02312, 6.57233),
-      LatLng(36.040394, 6.574727),
-      LatLng(36.043942, 6.567464),
-      LatLng(36.042003, 6.567560),
-      LatLng(36.041860, 6.563918),
-      LatLng(36.040229, 6.563816),
-      LatLng(36.039713, 6.565136),
-      LatLng(36.039179, 6.565999),
-      LatLng(36.038351, 6.566638),
-      LatLng(36.037596, 6.567078),
-      LatLng(36.035904, 6.568000),
-      LatLng(36.034655, 6.570457),
-      LatLng(36.034488, 6.572595),
-      LatLng(36.033969, 6.573247),
-      LatLng(36.021076, 6.567990),
-      LatLng(36.021369, 6.566466),
-      LatLng(36.021792, 6.562475),
-      LatLng(36.021657, 6.563483),
-    ];
+    final loopWaypoints = L89;
 
     // تحويل النقاط إلى نص الـ OSRM
     final coords = loopWaypoints.map((p) => "${p.longitude},${p.latitude}").join(";");
@@ -276,7 +262,8 @@ class HomePageState extends State<HomePage> {
     setState(() {
       routePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
     });
-    // await saveRouteToFirebase('bus', routePoints);
+    _mapController.move(routePoints.first, 15);
+    await saveRouteToFirebase('L89A', routePoints);
   }
 
   void fetchRouteWithWaypoints() async {
@@ -299,7 +286,7 @@ class HomePageState extends State<HomePage> {
     setState(() {
       routePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
     });
-    // await saveRouteToFirebase('taxi', routePoints);
+
 
   }
 
