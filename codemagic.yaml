@@ -10,7 +10,7 @@ workflows:
 
     scripts:
       # -------------------------------
-      # تنظيف المشروع (مهم جدا)
+      # تنظيف المشروع
       # -------------------------------
       - name: Clean project
         script: |
@@ -26,25 +26,41 @@ workflows:
           flutter pub get
 
       # -------------------------------
-      # إصلاح CocoaPods (حل Flutter.h)
+      # إصلاح iOS Pods (حل المشكلة الحقيقي)
       # -------------------------------
-      - name: Fix iOS Pods
+      - name: Fix iOS Pods (Deep Clean)
         script: |
-          echo "Fixing Pods..."
+          echo "Deep cleaning iOS..."
+
           cd ios
-          rm -rf Pods Podfile.lock
+
+          # حذف كل شيء متعلق بـ Pods و Flutter
+          rm -rf Pods
+          rm -rf Podfile.lock
+          rm -rf .symlinks
+          rm -rf Flutter/Flutter.framework
+          rm -rf Flutter/Flutter.podspec
+
+          # إعادة توليد ملفات Flutter iOS
+          cd ..
+          flutter pub get
+
+          cd ios
+
+          # إعادة ربط CocoaPods بشكل صحيح
           pod deintegrate
           pod setup
           pod install --repo-update
+
           cd ..
 
       # -------------------------------
-      # بناء IPA مباشرة (الطريقة الصحيحة)
+      # بناء IPA (مع verbose للتشخيص)
       # -------------------------------
       - name: Build iOS IPA
         script: |
           echo "Building IPA..."
-          flutter build ipa --release --no-codesign
+          flutter build ipa --release --no-codesign --verbose
 
     artifacts:
       - build/ios/ipa/*.ipa
