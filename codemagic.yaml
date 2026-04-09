@@ -26,41 +26,47 @@ workflows:
           flutter pub get
 
       # -------------------------------
-      # إصلاح iOS Pods (حل المشكلة الحقيقي)
+      # إصلاح iOS Pods (Deep Clean)
       # -------------------------------
       - name: Fix iOS Pods (Deep Clean)
         script: |
           echo "Deep cleaning iOS..."
-
           cd ios
-
-          # حذف كل شيء متعلق بـ Pods و Flutter
           rm -rf Pods
           rm -rf Podfile.lock
           rm -rf .symlinks
           rm -rf Flutter/Flutter.framework
           rm -rf Flutter/Flutter.podspec
-
-          # إعادة توليد ملفات Flutter iOS
           cd ..
           flutter pub get
-
           cd ios
-
-          # إعادة ربط CocoaPods بشكل صحيح
           pod deintegrate
           pod setup
           pod install --repo-update
-
           cd ..
 
       # -------------------------------
-      # بناء IPA (مع verbose للتشخيص)
+      # بناء IPA (Flutter يقوم بالبناء)
       # -------------------------------
       - name: Build iOS IPA
         script: |
           echo "Building IPA..."
           flutter build ipa --release --no-codesign --verbose
+
+      # -------------------------------
+      # التأكد من وجود IPA ونقله إلى مجلد ثابت
+      # -------------------------------
+      - name: Prepare IPA artifact
+        script: |
+          mkdir -p build/ios/ipa
+          IPA_PATH=$(find build/ios/ -name "*.ipa" | head -n 1)
+          if [ -f "$IPA_PATH" ]; then
+            echo "IPA found at $IPA_PATH, copying..."
+            cp "$IPA_PATH" build/ios/ipa/security_check.ipa
+          else
+            echo "No IPA found!"
+            exit 1
+          fi
 
     artifacts:
       - build/ios/ipa/*.ipa
