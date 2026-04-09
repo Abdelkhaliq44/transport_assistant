@@ -5,6 +5,7 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
+      cocoapods: default  # تأكد من وجود CocoaPods في البيئة
     scripts:
       - name: Get Flutter dependencies
         script: |
@@ -12,6 +13,16 @@ workflows:
           echo "Fetching Flutter dependencies..."
           flutter pub get
           echo "Dependencies fetched successfully."
+
+      - name: Install iOS dependencies with CocoaPods
+        script: |
+          set -e
+          echo "Installing CocoaPods dependencies..."
+          cd ios
+          pod repo update
+          pod install
+          cd ..
+          echo "CocoaPods dependencies installed."
 
       - name: Build iOS IPA
         script: |
