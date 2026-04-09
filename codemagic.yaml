@@ -5,7 +5,7 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-      cocoapods: default  # تأكد من وجود CocoaPods في البيئة
+      cocoapods: default
     scripts:
       - name: Get Flutter dependencies
         script: |
@@ -27,29 +27,12 @@ workflows:
       - name: Build iOS IPA
         script: |
           set -e
-          echo "Starting iOS build..."
+          echo "Starting iOS IPA build..."
           
-          # بناء التطبيق بدون توقيع رقمي
-          flutter build ios --release --no-codesign
-          echo "iOS build completed."
-
-          # تحديد المسار الصحيح لـ Runner.app
-          if [ -d "build/ios/iphoneos/Runner.app" ]; then
-              APP_PATH="build/ios/iphoneos"
-          elif [ -d "build/ios/Release-iphoneos/Runner.app" ]; then
-              APP_PATH="build/ios/Release-iphoneos"
-          else
-              echo "Runner.app not found!"
-              exit 1
-          fi
-
-          echo "Packaging IPA from $APP_PATH..."
-          mkdir -p $APP_PATH/Payload
-          cp -r $APP_PATH/Runner.app $APP_PATH/Payload/
-          mkdir -p build/ios/ipa
-          cd $APP_PATH
-          zip -r ../../ipa/transport_assistant.ipa Payload
-          echo "IPA created successfully at build/ios/ipa/transport_assistant.ipa"
+          # بناء التطبيق وإنشاء IPA مباشرة بدون توقيع رقمي
+          flutter build ipa --release --no-codesign --export-method ad-hoc
+          
+          echo "iOS IPA built successfully."
 
     artifacts:
       - build/ios/ipa/*.ipa
