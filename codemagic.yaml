@@ -1,38 +1,36 @@
 workflows:
-  ios-build:
-    name: iOS Build Workflow
+  ios-build-transport-assistant:
+    name: iOS Build Workflow - Transport Assistant
     max_build_duration: 60
     environment:
       flutter: stable
       xcode: latest
-      cocoapods: default
     scripts:
+      # -------------------------------
+      # تثبيت dependencies
+      # -------------------------------
       - name: Get Flutter dependencies
         script: |
-          set -e
-          echo "Fetching Flutter dependencies..."
-          flutter pub get
-          echo "Dependencies fetched successfully."
+          cd transport_assistant
+          flutter packages pub get
 
-      - name: Install iOS dependencies with CocoaPods
-        script: |
-          set -e
-          echo "Installing CocoaPods dependencies..."
-          cd ios
-          pod repo update
-          pod install
-          cd ..
-          echo "CocoaPods dependencies installed."
-
+      # -------------------------------
+      # بناء التطبيق بدون توقيع
+      # -------------------------------
       - name: Build iOS IPA
         script: |
-          set -e
-          echo "Starting iOS IPA build..."
-          
-          # بناء التطبيق وإنشاء IPA مباشرة بدون توقيع رقمي
-          flutter build ipa --release --no-codesign --export-method ad-hoc
-          
-          echo "iOS IPA built successfully."
+          cd transport_assistant
+          flutter build ios --release --no-codesign
+
+      # -------------------------------
+      # تجميع التطبيق في قالب IPA
+      # -------------------------------
+      - name: Package IPA
+        script: |
+          cd transport_assistant/build/ios/iphoneos
+          mkdir -p Payload
+          cp -r Runner.app Payload
+          zip -r ../ipa/transport_assistant.ipa Payload
 
     artifacts:
-      - build/ios/ipa/*.ipa
+      - transport_assistant/build/ios/ipa/*.ipa
