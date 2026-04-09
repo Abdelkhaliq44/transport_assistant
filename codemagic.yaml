@@ -1,0 +1,44 @@
+workflows:
+  ios-build:
+    name: iOS Build Workflow
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Get Flutter dependencies
+        script: |
+          set -e
+          echo "Fetching Flutter dependencies..."
+          flutter pub get
+          echo "Dependencies fetched successfully."
+
+      - name: Build iOS IPA
+        script: |
+          set -e
+          echo "Starting iOS build..."
+          
+          # بناء التطبيق بدون توقيع رقمي
+          flutter build ios --release --no-codesign
+          echo "iOS build completed."
+
+          # تحديد المسار الصحيح لـ Runner.app
+          if [ -d "build/ios/iphoneos/Runner.app" ]; then
+              APP_PATH="build/ios/iphoneos"
+          elif [ -d "build/ios/Release-iphoneos/Runner.app" ]; then
+              APP_PATH="build/ios/Release-iphoneos"
+          else
+              echo "Runner.app not found!"
+              exit 1
+          fi
+
+          echo "Packaging IPA from $APP_PATH..."
+          mkdir -p $APP_PATH/Payload
+          cp -r $APP_PATH/Runner.app $APP_PATH/Payload/
+          mkdir -p build/ios/ipa
+          cd $APP_PATH
+          zip -r ../../ipa/transport_assistant.ipa Payload
+          echo "IPA created successfully at build/ios/ipa/transport_assistant.ipa"
+
+    artifacts:
+      - build/ios/ipa/*.ipa
