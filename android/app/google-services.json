@@ -1,33 +1,91 @@
 {
   "project_info": {
-    "project_number": "1082631328396",
-    "project_id": "transport-assistant-2c59e",
-    "storage_bucket": "transport-assistant-2c59e.firebasestorage.app"
+    "project_number": "637729050501",
+    "project_id": "abdoufltter",
+    "storage_bucket": "abdoufltter.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:1082631328396:android:afd4fb490e60ad42a7a1a9",
+        "mobilesdk_app_id": "1:637729050501:android:48ecd9e40aa773439fbeec",
         "android_client_info": {
-          "package_name": "com.example.transport_assistant"
+          "package_name": "com.example.autthcatoin"
         }
       },
       "oauth_client": [
         {
-          "client_id": "1082631328396-4toi6ucbgr3hako9310rkpdrja1hde2p.apps.googleusercontent.com",
+          "client_id": "637729050501-4pr58peuhpi2m0iofh8a9sbvmk80naui.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAmLlRt_0eygATGRjiC1EXDmP9u5ry-DaY"
+          "current_key": "AIzaSyAVMQJ5ms3uejgI-xlLV21g_hN_I2cyJFA"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "1082631328396-4toi6ucbgr3hako9310rkpdrja1hde2p.apps.googleusercontent.com",
+              "client_id": "637729050501-4pr58peuhpi2m0iofh8a9sbvmk80naui.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:637729050501:android:e1dcfa1c481238cd9fbeec",
+        "android_client_info": {
+          "package_name": "com.example.firbase"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "637729050501-4pr58peuhpi2m0iofh8a9sbvmk80naui.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVMQJ5ms3uejgI-xlLV21g_hN_I2cyJFA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "637729050501-4pr58peuhpi2m0iofh8a9sbvmk80naui.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:637729050501:android:5838fa67b03ef5209fbeec",
+        "android_client_info": {
+          "package_name": "com.example.transport_assistant"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "637729050501-4pr58peuhpi2m0iofh8a9sbvmk80naui.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAVMQJ5ms3uejgI-xlLV21g_hN_I2cyJFA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "637729050501-4pr58peuhpi2m0iofh8a9sbvmk80naui.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

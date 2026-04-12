@@ -83,6 +83,11 @@ class HomePageState extends State<HomePage> {
   final LatLng startPoint = LatLng(36.021369, 6.566466);
   final LatLng endPoint = LatLng(36.034488, 6.572595);
   List<LatLng> routePoints = [];
+  List<LatLng> L36 = [];
+  List<LatLng> L58 = [];
+  List<LatLng> L89 = [];
+  List<LatLng> L608 = [];
+  List<LatLng> L12 = [];
   List<Marker> taxiMarkers = [];
   List<Marker> busMarkers = [];
   List<Marker> tramMarkers = [];
@@ -111,7 +116,10 @@ class HomePageState extends State<HomePage> {
     super.initState();
     _checkPermission();
     loadUserImage();
-    fetchLoopRoute();
+    //fetchLoopRoute();
+    Future.microtask(() async {
+      await loadAllRoutes();
+    });
   }
   String? imgpathe;
   loadUserImage() async {
@@ -136,11 +144,14 @@ class HomePageState extends State<HomePage> {
     if (!doc.exists) return [];
 
     final List data = doc['points'];
-
+   print('$routeName  asd $data  ');
     return data
         .map((e) => LatLng(e['lat'], e['lng']))
         .toList();
+
   }
+
+
   Future<void> changeSelection( int newSelection) async {
     print("Selection: $newSelection");
     setState(() {
@@ -162,15 +173,30 @@ class HomePageState extends State<HomePage> {
         break;
     }
   }
+  Future<void> loadAllRoutes() async {
+    final l36 = await loadRouteFromFirebase('L36','routes');
+    // final l58 = await loadRouteFromFirebase('L58','routes');
+     final l89 = await loadRouteFromFirebase('L89A','routes');
+    // final l608 = await loadRouteFromFirebase('L608A','routes');
+    // final l12 = await loadRouteFromFirebase('L12','routes');
 
+    setState(() {
+      L36 = l36;
+      // L58 = l58;
+      L89 = l89;
+      // L608 = l608;
+      // L12 = l12;
+    });
+  }
   Future<void> loadRoute(
       String type,
       ) async {
-    //final points = await loadRouteFromFirebase(type,'routes');
-    final points = line1;
+    final points = await loadRouteFromFirebase(type,'routes');
+    // final points = line1;
     final markers = await loadRouteFromFirebase(type,'markers');
+
     setState(() {
-      routePoints = [];
+      routePoints = points;
       _Marker = markers;
     });
     //_mapController.move(routePoints.first, 15);
@@ -249,7 +275,7 @@ class HomePageState extends State<HomePage> {
   // await saveRouteToFirebase('bus', busStops);
   void fetchLoopRoute() async {
   // هاذي ليستا لموها يدويا  تع النقاط المتوقة لل   خط نقل
-    final loopWaypoints = L89;
+    final loopWaypoints = L36A;
 
     // تحويل النقاط إلى نص الـ OSRM
     final coords = loopWaypoints.map((p) => "${p.longitude},${p.latitude}").join(";");
@@ -264,7 +290,7 @@ class HomePageState extends State<HomePage> {
       routePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
     });
     _mapController.move(routePoints.first, 15);
-   // await saveRouteToFirebase('L89A', routePoints);
+   //await saveRouteToFirebase('L36', routePoints);
   }
 
   void fetchRouteWithWaypoints() async {
@@ -610,6 +636,65 @@ class HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
+                if (L89.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L89,
+                        color: Colors.red,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (L36.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L36,
+                        color: Colors.brown,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (L608.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L608,
+                        color: Colors.blue,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (L12.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L12,
+                        color: Colors.blue,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (L58.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L58,
+                        color: Colors.blue,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: line1,
+                      color: Colors.green,
+                      strokeWidth: 4,
+                    ),
+                  ],
+                ),
                 MarkerLayer(markers: visibleMarkers),
               ],
             ),
