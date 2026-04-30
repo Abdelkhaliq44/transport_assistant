@@ -9,14 +9,23 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_google_places_sdk/flutter_google_places_sdk.dart' as Places;
+import 'package:transport_assistant/lines_etusa/L36.dart';
 import 'package:transport_assistant/lines_etusa/L89.dart';
 import 'package:transport_assistant/lines_etusa/dergana_harach_NL608.dart';
+import 'package:transport_assistant/lines_etusa/line_metro.dart';
 import 'package:transport_assistant/lines_etusa/line_tram.dart';
 import 'package:transport_assistant/lines_etusa/sahetchohada_chevally_NL58.dart';
+import 'package:transport_assistant/lines_etusa/staoueli_sahetchouhada_NL12.dart';
+import 'package:transport_assistant/lines_etusa/tren.dart';
+import 'package:transport_assistant/marker/metro.dart';
+import 'package:transport_assistant/marker/station_NL12.dart';
+import 'package:transport_assistant/marker/station_NL58.dart';
+import 'package:transport_assistant/marker/station_NL608.dart';
+import 'package:transport_assistant/marker/tram.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:transport_assistant/marker/tran.dart';
 import 'dart:async';
 import '../Data/favorite_points.dart';
-
-import '../lines_etusa/staoueli_sahetchouhada_NL12.dart';
 import 'acount/drwer_acount.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
@@ -85,9 +94,23 @@ class HomePageState extends State<HomePage> {
   final LatLng startPoint = LatLng(36.021369, 6.566466);
   final LatLng endPoint = LatLng(36.034488, 6.572595);
   List<LatLng> routePoints = [];
+  List<LatLng> L36 = [];
+  List<LatLng> L58 = [];
+  List<LatLng> L89 = [];
+  List<LatLng> L608 = [];
+  List<LatLng> L12 = [];
+  List<LatLng> Metro = [];
+  List<LatLng> Tram = [];
+  List<LatLng> Teleferik = [];
   List<Marker> taxiMarkers = [];
   List<Marker> busMarkers = [];
   List<Marker> tramMarkers = [];
+  List<Marker> metroMarkers = [];
+  List<Marker> L58Markers = [];
+  List<Marker> L608Markers = [];
+  List<Marker> L12Markers = [];
+  List<Marker> tranMarkers = [];
+  List<Marker> teleferikMarkers = [];
   List<Marker> visibleMarkers = [];
    List<Marker> _Markers = [];
   List<Places.AutocompletePrediction> predictions = [];
@@ -103,9 +126,8 @@ class HomePageState extends State<HomePage> {
     List<LatLng> markerPoints = getmarkerlinePoints(data);
     setState(() {
           routePoints = polylinePoints;
-         _Marker= markerPoints;
          });
-    await buildMarkers('bus');
+    await buildMarkers('bus',markerPoints);
     return polylinePoints;
   }
   @override
@@ -113,8 +135,30 @@ class HomePageState extends State<HomePage> {
     super.initState();
     _checkPermission();
     loadUserImage();
-    fetchLoopRoute();
+    //fetchLoopRoute();
+    Future.microtask(() async {
+      await loadAllRoutes();
+    });
+
   }
+  // final firestore = FirebaseFirestore.instance;
+  // Future<void> movePoints() async {
+  //   // 1. جلب البيانات من المصدر
+  //   final sourceDoc = await firestore
+  //       .collection('markers')
+  //       .doc('taxi')
+  //       .get();
+  //
+  //   final points = sourceDoc.data()?['points'];
+  //
+  //   // 2. نقلها إلى routes
+  //   await firestore
+  //       .collection('routes')
+  //       .doc('taxi')
+  //       .set({
+  //     'marker': points,
+  //   }, SetOptions(merge: true));
+  // }
   String? imgpathe;
   loadUserImage() async {
     try {
@@ -128,7 +172,7 @@ class HomePageState extends State<HomePage> {
       print("Error loading user image: $e");
     }
   }
-  Future<List<LatLng>> loadRouteFromFirebase(String routeName,String route) async {
+  Future<List<LatLng>> loadRouteFromFirebase(String routeName,String choice,String route) async {
     final doc = await FirebaseFirestore.instance
         .collection(route)
     //'routes'
@@ -137,12 +181,15 @@ class HomePageState extends State<HomePage> {
 
     if (!doc.exists) return [];
 
-    final List data = doc['points'];
-
+    final List data = doc[choice];
+   print('$routeName  asd $data  ');
     return data
         .map((e) => LatLng(e['lat'], e['lng']))
         .toList();
+
   }
+
+
   Future<void> changeSelection( int newSelection) async {
     print("Selection: $newSelection");
     setState(() {
@@ -165,25 +212,80 @@ class HomePageState extends State<HomePage> {
     }
   }
 
+  Widget getIcon(String type) {
+    switch (type) {
+      case "taxi":
+        return Icon(Icons.local_taxi,color: Colors.greenAccent,);
+      case "bus":
+        return Icon(Icons.directions_bus,color: Colors.blueAccent,);
+      case "tram":
+        return Icon(Icons.tram,color: Colors.deepPurple,);
+      case "metro":
+        return Icon(Icons.directions_subway,color: Colors.deepOrangeAccent,);
+      case "teleferik":
+        return FaIcon(FontAwesomeIcons.cableCar,color: Colors.pink,);
+      case "tran":
+        return FaIcon(FontAwesomeIcons.train,color: Colors.pink,);
+      case "metro":
+        return Icon(Icons.directions_subway,color: Colors.deepOrangeAccent,);
+      case "teleferik":
+        return FaIcon(FontAwesomeIcons.cableCar,color: Colors.pink,);
+      case "tran":
+        return FaIcon(FontAwesomeIcons.train,color: Colors.pink,);
+      default:
+        return Icon(Icons.help);
+    }
+  }
+  Future<void> loadAllRoutes() async {
+    final l36 = await loadRouteFromFirebase('L36','points','routes');
+    final l58 = await loadRouteFromFirebase('L58','points','routes');
+     final l89 = await loadRouteFromFirebase('L89A','points','routes');
+     final l608 = await loadRouteFromFirebase('L608A','points','routes');
+     final l12 = await loadRouteFromFirebase('L12','points','routes');
+    final tram = await loadRouteFromFirebase('tram','points','routes');
+     final metro = await loadRouteFromFirebase('metro','pints','routes');
+    final teleferik = await loadRouteFromFirebase('teleferik','points','routes');
+    final tram_m = await loadRouteFromFirebase('tram','marker','routes');
+    final metro_m = await loadRouteFromFirebase('metro','marker','routes');
+    await buildMarkers('teleferik', teleferik);
+     await buildMarkers('tram', tram_m);
+     await buildMarkers('metro', metro_m);
+    await buildMarkers('tran', Tran_station);
+    await buildMarkers('L12', L12_station);
+    await buildMarkers('L608', L608_station);
+    await buildMarkers('L58', L58_station);
+
+    // await saveRouteToFirebase('metro','marker',metro_station);
+    //await saveRouteToFirebase('metro','points',metro_line);
+    setState(() {
+      L36 = l36;
+       L58 = l58;
+      L89 = l89;
+       L608 = l608;
+       L12 = l12;
+      Tram=tram;
+       Metro =metro;
+      Teleferik = teleferik;
+    });
+  }
   Future<void> loadRoute(
       String type,
       ) async {
-    //final points = await loadRouteFromFirebase(type,'routes');
-    final points = line1;
-    final markers = await loadRouteFromFirebase(type,'markers');
+    final points = await loadRouteFromFirebase(type,'points','routes');
+    // final points = line1;
+    final markers = await loadRouteFromFirebase(type,'marker','routes');
+
     setState(() {
-      routePoints = [];
-      _Marker = markers;
+      routePoints = points;
     });
     //_mapController.move(routePoints.first, 15);
-    await buildMarkers(type);
-    if (_Marker.isNotEmpty) {
-      _mapController.move(_Marker.first, 18);
-    }
+    await buildMarkers(type,markers);
+    _mapController.move(markers.first, 18);
+
   }
   // Future<void> loadBusRoute() async {
-  //   final points = await loadRouteFromFirebase('bus','routes');
-  //   final marker = await loadRouteFromFirebase('bus','markers');
+  //   final points = await loadRouteFromFirebase('bus','points','routes');
+  //   final marker = await loadRouteFromFirebase('bus','marker','routes');
   //
   //   setState(() {
   //     loopRoutePoints = points;
@@ -193,11 +295,10 @@ class HomePageState extends State<HomePage> {
   // }
 
 
-  List<LatLng> _Marker = [];
-
 
   Future<void> saveRouteToFirebase(
       String type,
+      String choice,
       List<LatLng> points,
       ) async {
     final data = points.map((p) => {
@@ -209,51 +310,51 @@ class HomePageState extends State<HomePage> {
       await FirebaseFirestore.instance
           .collection('routes')
           .doc(type)
-          .set({'points': data});
+          .set({choice: data},SetOptions(merge: true),);//up points to  marker
 
       print("✅ Saved successfully: $type");
     } catch (e) {
       print("❌ Firebase error: $e");
     }
   }
-  Future<void> buildMarkers(String type) async {
+  Future<void> buildMarkers(String type,List<LatLng> _Markerl) async {
     List<Marker> temp = [];
 
-    for (int i = 0; i < _Marker.length; i++) {
+    for (int i = 0; i < _Markerl.length; i++) {
       temp.add(
         Marker(
-          point: _Marker[i],
+          point: _Markerl[i],
           width: 40,
           height: 40,
           child: CircleAvatar(
             backgroundColor:  Colors.black45,
-            child: Icon(
-              type == "taxi"
-                  ? Icons.local_taxi
-                  : type == "bus"
-                  ? Icons.directions_bus
-                  : Icons.train,
-              color: Colors.greenAccent,
-            ),
+            child:getIcon(type),
           ),
         ),
       );
     }
 
     setState(() {
-      if (type == "taxi") taxiMarkers = temp;
-      if (type == "bus") busMarkers = temp;
+      if (type == "taxi") {taxiMarkers = temp;busMarkers.clear();}
+      if (type == "bus") {busMarkers = temp;taxiMarkers.clear();}
       if (type == "tram") tramMarkers = temp;
+      if (type == "metro") metroMarkers = temp;
+      if (type == "teleferik") teleferikMarkers = temp;
+      if (type == "tran") tranMarkers = temp;
+      if (type == "L12") L12Markers = temp;
+      if (type == "L58") L58Markers = temp;
+      if (type == "L608") L608Markers = temp;
 
-      visibleMarkers = temp; // 👈 هذا المهم
+      //visibleMarkers.clear();
+     // visibleMarkers = temp; // 👈 هذا المهم
     });
   }
-  // await saveRouteToFirebase('bus', busStops);
+  // await saveRouteToFirebase('bus','points', busStops);
   void fetchLoopRoute() async {
   // هاذي ليستا لموها يدويا  تع النقاط المتوقة لل   خط نقل
-    final loopWaypoints = L58;
+    final loopWaypoints = L12A;
 
-    // تحويل النقاط إلى نص الـ OSRM
+    // تحويل النقاط إلى نص الـ OSRM7
     final coords = loopWaypoints.map((p) => "${p.longitude},${p.latitude}").join(";");
 
     final url = "https://router.project-osrm.org/route/v1/driving/$coords?overview=full&geometries=geojson";
@@ -266,7 +367,7 @@ class HomePageState extends State<HomePage> {
       routePoints = routeCoords.map<LatLng>((c) => LatLng(c[1], c[0])).toList();
     });
     _mapController.move(routePoints.first, 15);
-    //await saveRouteToFirebase('L89A', routePoints);
+   //await saveRouteToFirebase('L12','points',routePoints);
   }
 
   void fetchRouteWithWaypoints() async {
@@ -612,7 +713,104 @@ class HomePageState extends State<HomePage> {
                       ),
                     ],
                   ),
-                MarkerLayer(markers: visibleMarkers),
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: tran_line,
+                      color: Colors.redAccent,
+                      strokeWidth: 4,
+                    ),
+                  ],
+                ),
+                if (L89.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L89,
+                        color: Colors.red,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (L36.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L36,
+                        color: Colors.brown,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (L608.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L608,
+                        color: Colors.blue,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (L12.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L12,
+                        color: Colors.deepPurple,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (L58.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: L58,
+                        color: Colors.blue,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                if (Tram.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: Tram,
+                      color: Colors.green,
+                      strokeWidth: 4,
+                    ),
+                  ],
+                ),
+                if (Metro.isNotEmpty)
+                PolylineLayer(
+                  polylines: [
+                    Polyline(
+                      points: Metro,
+                      color: Colors.black,
+                      strokeWidth: 4,
+                    ),
+                  ],
+                ),
+                if (Teleferik.isNotEmpty)
+                  PolylineLayer(
+                    polylines: [
+                      Polyline(
+                        points: Teleferik,
+                        color: Colors.black,
+                        strokeWidth: 4,
+                      ),
+                    ],
+                  ),
+                MarkerLayer(markers: metroMarkers),
+                MarkerLayer(markers:taxiMarkers ),
+                MarkerLayer(markers: busMarkers),
+                MarkerLayer(markers: tramMarkers),
+                MarkerLayer(markers: teleferikMarkers),
+                MarkerLayer(markers: tranMarkers),
+                MarkerLayer(markers: L12Markers),
+                MarkerLayer(markers: L58Markers),
+                MarkerLayer(markers: L608Markers),
               ],
             ),
             if(_showBottomInfo && _selectedAddress !=null)
@@ -794,7 +992,9 @@ class HomePageState extends State<HomePage> {
                 ],
                 selected: <int>{Selection},
                 onSelectionChanged: (newSelection) async {
+                 // visibleMarkers.clear();
                   await changeSelection(newSelection.first);
+
                 },
 
 

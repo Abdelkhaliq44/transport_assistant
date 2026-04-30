@@ -5,11 +5,14 @@ import 'package:transport_assistant/ui_pages/line_page.dart';
 import 'package:transport_assistant/ui_pages/opshns_page.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'line_type.dart';
+import 'firebase_options.dart';
 
 void main() async{
   WidgetsFlutterBinding.ensureInitialized();
   await EasyLocalization.ensureInitialized();
-  await   Firebase.initializeApp();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(   EasyLocalization(
     supportedLocales:  [Locale('en'), Locale('ar'), Locale('fr')],
     path: 'assets/lang',

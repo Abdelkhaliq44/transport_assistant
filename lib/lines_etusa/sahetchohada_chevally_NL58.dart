@@ -1,5 +1,5 @@
 import 'package:latlong2/latlong.dart';
-List<LatLng> L58 =[
+List<LatLng> L58A =[
 LatLng(36.785578, 3.062752),
 LatLng(36.784737, 3.062843),
 LatLng(36.784634, 3.063366),

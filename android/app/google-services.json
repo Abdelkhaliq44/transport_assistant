@@ -29,6 +29,13 @@
             {
               "client_id": "1082631328396-4toi6ucbgr3hako9310rkpdrja1hde2p.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "1082631328396-98tdunf0jq7etrqbsm1ge4n5hsl4sncs.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.transportAssistant"
+              }
             }
           ]
         }
