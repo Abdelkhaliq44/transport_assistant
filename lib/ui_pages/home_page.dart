@@ -17,7 +17,9 @@ import 'package:transport_assistant/lines_etusa/line_tram.dart';
 import 'package:transport_assistant/lines_etusa/sahetchohada_chevally_NL58.dart';
 import 'package:transport_assistant/lines_etusa/staoueli_sahetchouhada_NL12.dart';
 import 'package:transport_assistant/lines_etusa/tren.dart';
+import 'package:transport_assistant/marker/L36_station.dart';
 import 'package:transport_assistant/marker/metro.dart';
+import 'package:transport_assistant/marker/stastion_L89.dart';
 import 'package:transport_assistant/marker/station_NL12.dart';
 import 'package:transport_assistant/marker/station_NL58.dart';
 import 'package:transport_assistant/marker/station_NL608.dart';
@@ -67,7 +69,42 @@ class RouteRequest {
 
 double lastLat = 36.021284;
 double lastLng = 6.567206;
+class LineSelectionRequest {
+  double? lat1, long1, lat2, long2;
+  String cost;
+  String time;
+  String comfort;
 
+  LineSelectionRequest({
+    this.lat1, this.long1, this.lat2, this.long2,
+    this.cost = "low",
+    this.time = "medium",
+    this.comfort = "low",
+  });
+
+  Map<String, dynamic> toJson() => {
+    "lat1": lat1,
+    "long1": long1,
+    "lat2": lat2,
+    "long2": long2,
+    "Cost": cost,
+    "time": time,
+    "Comfort": comfort,
+  };
+}
+
+class LineResult {
+  final String lineName;
+  final double score;
+  LineResult({required this.lineName, required this.score});
+
+  factory LineResult.fromJson(Map<String, dynamic> json) {
+    return LineResult(
+      lineName: json['line_name'],
+      score: (json['score'] as num).toDouble(),
+    );
+  }
+}
 class HomePage extends StatefulWidget {
   final Function(Locale)? onLocaleChanged;
   const HomePage({super.key, this.onLocaleChanged}) ;
@@ -108,13 +145,57 @@ class HomePageState extends State<HomePage> {
   List<Marker> metroMarkers = [];
   List<Marker> L58Markers = [];
   List<Marker> L608Markers = [];
+  List<Marker> L36Markers = [];
+  List<Marker> L89Markers = [];
   List<Marker> L12Markers = [];
   List<Marker> tranMarkers = [];
   List<Marker> teleferikMarkers = [];
   List<Marker> visibleMarkers = [];
    List<Marker> _Markers = [];
   List<Places.AutocompletePrediction> predictions = [];
+  List<LineResult> suggestedLines = [];
+  bool _showLineSelector = false;
+  String selectedCost = "low";
+  String selectedTime = "medium";
+  String selectedComfort = "low";
+  LineSelectionRequest lineSelectionRequest = LineSelectionRequest();
+  Future<void> selectLines() async {
+    lineSelectionRequest.lat1 = routeRequest.lat1;
+    lineSelectionRequest.long1 = routeRequest.long1;
+    lineSelectionRequest.lat2 = routeRequest.lat2;
+    lineSelectionRequest.long2 = routeRequest.long2;
+    lineSelectionRequest.cost = selectedCost;
+    lineSelectionRequest.time = selectedTime;
+    lineSelectionRequest.comfort = selectedComfort;
 
+    try {
+      final response = await http.post(
+        Uri.parse("http://192.168.1.10:5001/select-lines"),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(lineSelectionRequest.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final routes = data['data']['routes'] as List;
+
+        setState(() {
+          suggestedLines = routes
+              .map((e) => LineResult.fromJson(e))
+              .toList();
+          _showLineSelector = true;
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("فشل في جلب الخطوط: ${response.statusCode}")),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("خطأ في الاتصال: $e")),
+      );
+    }
+  }
   Future sendData(RouteRequest routeRequest) async {
     final response = await http.post(
       Uri.parse("http://10.222.16.227:5000/route"),
@@ -213,6 +294,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Widget getIcon(String type) {
+    print('typeee $type');
     switch (type) {
       case "taxi":
         return Icon(Icons.local_taxi,color: Colors.greenAccent,);
@@ -226,12 +308,17 @@ class HomePageState extends State<HomePage> {
         return FaIcon(FontAwesomeIcons.cableCar,color: Colors.pink,);
       case "tran":
         return FaIcon(FontAwesomeIcons.train,color: Colors.pink,);
-      case "metro":
-        return Icon(Icons.directions_subway,color: Colors.deepOrangeAccent,);
-      case "teleferik":
-        return FaIcon(FontAwesomeIcons.cableCar,color: Colors.pink,);
-      case "tran":
-        return FaIcon(FontAwesomeIcons.train,color: Colors.pink,);
+      case "L12":
+        return Icon(Icons.label_important,color: Colors.deepOrangeAccent,);
+      case "L36":
+        return Icon(Icons.offline_bolt,color: Colors.lightGreenAccent,);
+      case "L58":
+        return Icon(Icons.adb_outlined,color: Colors.white12,);
+      case "L608":
+        return Icon(Icons.move_down,color: Colors.deepOrangeAccent,);
+      case "L89":
+        return Icon(Icons.tsunami,color: Colors.lightGreenAccent,);
+
       default:
         return Icon(Icons.help);
     }
@@ -243,19 +330,27 @@ class HomePageState extends State<HomePage> {
      final l608 = await loadRouteFromFirebase('L608A','points','routes');
      final l12 = await loadRouteFromFirebase('L12','points','routes');
     final tram = await loadRouteFromFirebase('tram','points','routes');
-     final metro = await loadRouteFromFirebase('metro','pints','routes');
+     final metro = await loadRouteFromFirebase('metro','points','routes');
     final teleferik = await loadRouteFromFirebase('teleferik','points','routes');
     final tram_m = await loadRouteFromFirebase('tram','marker','routes');
+    final L12_m = await loadRouteFromFirebase('L12','marker','routes');
+    final L58_m = await loadRouteFromFirebase('L58','marker','routes');
+    final L608_m = await loadRouteFromFirebase('L608A','marker','routes');
+    final L89_m = await loadRouteFromFirebase('L89A','marker','routes');
+    final L36_m = await loadRouteFromFirebase('L36','marker','routes');
     final metro_m = await loadRouteFromFirebase('metro','marker','routes');
     await buildMarkers('teleferik', teleferik);
      await buildMarkers('tram', tram_m);
      await buildMarkers('metro', metro_m);
     await buildMarkers('tran', Tran_station);
-    await buildMarkers('L12', L12_station);
-    await buildMarkers('L608', L608_station);
-    await buildMarkers('L58', L58_station);
-
-    // await saveRouteToFirebase('metro','marker',metro_station);
+    await buildMarkers('L12', L12_m);
+    await buildMarkers('L608', L608_m);
+    await buildMarkers('L58', L58_m);
+    await buildMarkers('L36', L36_m);
+    await buildMarkers('L89', L89_m);
+    // await saveRouteToFirebase('L12','marker',L12_station);
+    // await saveRouteToFirebase('L58','marker',L58_station);
+    // await saveRouteToFirebase('L608A','marker',L608_station);
     //await saveRouteToFirebase('metro','points',metro_line);
     setState(() {
       L36 = l36;
@@ -344,6 +439,8 @@ class HomePageState extends State<HomePage> {
       if (type == "L12") L12Markers = temp;
       if (type == "L58") L58Markers = temp;
       if (type == "L608") L608Markers = temp;
+      if (type == "L36") L36Markers = temp;
+      if (type == "L89") L89Markers = temp;
 
       //visibleMarkers.clear();
      // visibleMarkers = temp; // 👈 هذا المهم
@@ -811,6 +908,8 @@ class HomePageState extends State<HomePage> {
                 MarkerLayer(markers: L12Markers),
                 MarkerLayer(markers: L58Markers),
                 MarkerLayer(markers: L608Markers),
+                MarkerLayer(markers: L36Markers),
+                MarkerLayer(markers: L89Markers),
               ],
             ),
             if(_showBottomInfo && _selectedAddress !=null)
@@ -898,6 +997,78 @@ class HomePageState extends State<HomePage> {
                                 },
                                 child: Text('get line')
                             ),
+                            // --- Preferences ---
+                            const SizedBox(height: 12),
+                            Text("تفضيلات الرحلة", style: TextStyle(fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 8),
+
+// Cost
+                            Row(children: [
+                              const Text("التكلفة:  "),
+                              DropdownButton<String>(
+                                value: selectedCost,
+                                items: ["low","medium","high"]
+                                    .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                                    .toList(),
+                                onChanged: (v) => setState(() => selectedCost = v!),
+                              ),
+                            ]),
+
+// Time
+                            Row(children: [
+                              const Text("الوقت:    "),
+                              DropdownButton<String>(
+                                value: selectedTime,
+                                items: ["low","medium","high"]
+                                    .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                                    .toList(),
+                                onChanged: (v) => setState(() => selectedTime = v!),
+                              ),
+                            ]),
+
+// Comfort
+                            Row(children: [
+                              const Text("الراحة:   "),
+                              DropdownButton<String>(
+                                value: selectedComfort,
+                                items: ["low","medium","high"]
+                                    .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+                                    .toList(),
+                                onChanged: (v) => setState(() => selectedComfort = v!),
+                              ),
+                            ]),
+
+                            const SizedBox(height: 8),
+                            ElevatedButton.icon(
+                              icon: const Icon(Icons.route),
+                              label: const Text("اقترح أفضل خط"),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple),
+                              onPressed: () async {
+                                await selectLines();
+                              },
+                            ),
+                            
+                            if (_showLineSelector && suggestedLines.isNotEmpty) ...[
+                              const SizedBox(height: 12),
+                              const Text("الخطوط المقترحة:", style: TextStyle(fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 6),
+                              ...suggestedLines.map((line) => Card(
+                                child: ListTile(
+                                  leading: getIcon(line.lineName),
+                                  title: Text(line.lineName, style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  trailing: Chip(
+                                    label: Text("${line.score.toInt()} نقطة"),
+                                    backgroundColor: Colors.blue.shade100,
+                                  ),
+                                  onTap: () async {
+                                    // عند الضغط يحمل مسار الخط على الخريطة
+                                    routeRequest.document = line.lineName;
+                                    await sendData(routeRequest);
+                                  },
+                                ),
+                              )).toList(),
+                            ],
+                            SizedBox(height: 109,)
 
                           ]
                       ),
@@ -995,95 +1166,12 @@ class HomePageState extends State<HomePage> {
                  // visibleMarkers.clear();
                   await changeSelection(newSelection.first);
 
-                },
-
-
+                },   // ✅ بدون ;
               ),
             ),
-            if (_showSearch)
-              Positioned(
-                top: kToolbarHeight,
-                left: 15,
-                right: 15,
-                child: Container(
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(12),
-                    boxShadow: [BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 2))],
-                  ),
-                  constraints: BoxConstraints(maxHeight: 300),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        onChanged: (value) async {
-                          if (value.isEmpty) {
-                            setState(() => predictions = []);
-                            return;
-                          }
-                          final result = await places.findAutocompletePredictions(
-                            value,
-                            countries: ["dz"],
-                          );
-                          setState(() => predictions = List.from(result.predictions));
-                        },
-                        controller: _searchController,
-                        decoration: InputDecoration(
-                          hintText: "search_hint".tr(),
-                          prefixIcon: const Icon(Icons.search),
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                        ),
-                      ),
-                      if (predictions.isNotEmpty)
-                        Flexible(
-                          child: ListView.builder(
-                            shrinkWrap: true,
-                            itemCount: predictions.length,
-                            itemBuilder: (context, index) {
-                              final p = predictions[index];
-                              return ListTile(
-                                title: Text(p.fullText),
-                                onTap: () async {
-                                  final detail = await places.fetchPlace(
-                                    p.placeId,
-                                    fields: [Places.PlaceField.Location],
-                                  );
-                                  final lat = detail.place!.latLng!.lat;
-                                  final lng = detail.place!.latLng!.lng;
-
-                                  _mapController.move(LatLng(lat, lng), 18);
-
-                                  setState(() {
-                                    predictions = [];
-                                    _showSearch = false;
-                                    _searchController.clear();
-
-                                    // ✅ أضف الـ marker
-                                    //_Markers.clear();
-                                    _Markers.add(
-                                      Marker(
-                                        point: LatLng(lat, lng),
-                                        width: 60,
-                                        height: 60,
-                                        child: const Icon(
-                                          Icons.location_on,
-                                          color: Colors.red,
-                                          size: 60,
-                                        ),
-                                      ),
-                                    );
-                                  });
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ),
-          ]
+          ],
       ),
     );
   }
 }
+   
