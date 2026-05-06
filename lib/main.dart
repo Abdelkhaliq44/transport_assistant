@@ -1,4 +1,4 @@
-/*import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:transport_assistant/ui_pages/home_page.dart';
 import 'package:transport_assistant/ui_pages/line_page.dart';
@@ -156,8 +156,8 @@ class _MyAppState extends State<MyApp> {
       }
     );
   }
-}*/
-import 'package:flutter/material.dart';
+}
+/*import 'package:flutter/material.dart';
 import 'package:transport_assistant/UI/OTP_screen.dart';
 import 'package:transport_assistant/UI/Taxi_lines.dart';
 import 'package:transport_assistant/UI/bus_lines.dart';
@@ -191,4 +191,4 @@ class MyApp extends StatelessWidget {
       home: MainScreen(),
     );
   }
-}
+}*/
