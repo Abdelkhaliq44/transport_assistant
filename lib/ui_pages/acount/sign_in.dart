@@ -31,7 +31,7 @@ class _SignInState extends State<SignIn> {
 
                           child: CircleAvatar(
                             radius: 80,
-                            backgroundImage: AssetImage('assets/images/acont_defalt.jpg'),
+                            backgroundImage: AssetImage('assets/images/51b7a54fb46ffca4bc9e6e7c5324762cba3f9c83.jpg'),
                           ),
                         ),
                       ),

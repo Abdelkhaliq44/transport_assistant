@@ -105,55 +105,54 @@ class _MyAppState extends State<MyApp> {
 
     ];
     return Builder(
-      builder: (context) {
-        return SafeArea(
-          child: MaterialApp(
+        builder: (context) {
+          return SafeArea(
+              child: MaterialApp(
 
-            debugShowCheckedModeBanner: false,
-            localizationsDelegates: context.localizationDelegates,
-            supportedLocales: context.supportedLocales,
-            themeMode: _themeMode,
-            theme: ThemeData.light(),
-            darkTheme: ThemeData.dark(),
-            title: 'Transport_Assistant',
-            locale:context.locale,
-            home: Scaffold(
-              backgroundColor: Colors.transparent,
-              body:PageView(
-                physics: const NeverScrollableScrollPhysics(),
-                controller: _pageController,
-                onPageChanged: (index){
-                  setState(() {
-                    _slctedindex=index;
-                  });
+                  debugShowCheckedModeBanner: false,
+                  localizationsDelegates: context.localizationDelegates,
+                  supportedLocales: context.supportedLocales,
+                  themeMode: _themeMode,
+                  theme: ThemeData.light(),
+                  darkTheme: ThemeData.dark(),
+                  title: 'Transport_Assistant',
+                  locale:context.locale,
+                  home: Scaffold(
+                      backgroundColor: Colors.transparent,
+                      body:PageView(
+                          physics: const NeverScrollableScrollPhysics(),
+                          controller: _pageController,
+                          onPageChanged: (index){
+                            setState(() {
+                              _slctedindex=index;
+                            });
+                          },
+                        children: screns,
+                      ),
+                    bottomNavigationBar:Builder(
+                        builder: (context) {
+                          return BottomNavigationBar(
+                            backgroundColor:
+                            _themeMode == ThemeMode.dark ? Colors.black54 : const Color(0xff4B7BFF),
+                            selectedItemColor: Colors.white,
+                            unselectedItemColor: Color(0xffFFA726),
+                            currentIndex: _slctedindex,
+                            selectedFontSize: 20,
+                            unselectedFontSize: 16,
+                            onTap:_onchingde,
+                            items: [
+                              BottomNavigationBarItem(icon: Icon(Icons.home_filled),label: 'home'.tr()),
+                              BottomNavigationBarItem(icon: Icon(Icons.map_outlined),label: 'path'.tr()),
+                              BottomNavigationBarItem(icon: Icon(Icons.menu_outlined),label: 'options'.tr()),
+                            ],  
+                          );
+                        }
+                    ),
 
-                },
-                children: screns,
+                  ),
               ),
-              bottomNavigationBar:Builder(
-                builder: (context) {
-                  return BottomNavigationBar(
-                    backgroundColor:
-                    _themeMode == ThemeMode.dark ? Colors.black54 : const Color(0xff4B7BFF),
-                    selectedItemColor: Colors.white,
-                    unselectedItemColor: Color(0xffFFA726),
-                    currentIndex: _slctedindex,
-                    selectedFontSize: 20,
-                    unselectedFontSize: 16,
-                    onTap:_onchingde,
-                    items: [
-                      BottomNavigationBarItem(icon: Icon(Icons.home_filled),label: 'home'.tr()),
-                      BottomNavigationBarItem(icon: Icon(Icons.map_outlined),label: 'path'.tr()),
-                      BottomNavigationBarItem(icon: Icon(Icons.menu_outlined),label: 'options'.tr()),
-                    ],
-                  );
-                }
-              ),
-
-            ),
-          ),
-        );
-      }
+          );
+        }
     );
   }
 }

@@ -170,7 +170,7 @@ class HomePageState extends State<HomePage> {
 
     try {
       final response = await http.post(
-        Uri.parse("http://192.168.1.10:5001/select-lines"),
+        Uri.parse("http://192.168.1.69:5001/select-lines"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(lineSelectionRequest.toJson()),
       );
@@ -300,7 +300,7 @@ class HomePageState extends State<HomePage> {
 
   Future sendData(RouteRequest routeRequest) async {
     final response = await http.post(
-      Uri.parse("http://10.222.16.227:5000/route"),
+      Uri.parse("http://192.168.1.69:5000/route"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(routeRequest.toJson()),
     );
