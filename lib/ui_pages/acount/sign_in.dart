@@ -1,7 +1,10 @@
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:transport_assistant/UI/navigator_barre.dart';
 import 'package:transport_assistant/UI/page_home.dart' show MapScreen;
 import 'package:transport_assistant/UI/page_singup.dart';
+import 'package:transport_assistant/firebase/firebase_auth.dart';
 
 class SignIn extends StatefulWidget {
   const SignIn({super.key});
