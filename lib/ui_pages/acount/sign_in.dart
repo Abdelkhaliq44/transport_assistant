@@ -213,7 +213,7 @@ class _SignInState extends State<SignIn> {
 //
 //                           if (user!.emailVerified) {
 //                             // ✅ الإيميل مؤكد → دخول
-//                             widget.onGoToHome?.call();
+//                             widget.onToHome?.call();
 //                             Navigator.of(context).pop();
 //                           } else {
 //                             // ❌ الإيميل غير مؤكد
