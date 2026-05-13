@@ -105,90 +105,54 @@ class _MyAppState extends State<MyApp> {
 
     ];
     return Builder(
-      builder: (context) {
-        return SafeArea(
-          child: MaterialApp(
+        builder: (context) {
+          return SafeArea(
+              child: MaterialApp(
 
-            debugShowCheckedModeBanner: false,
-            localizationsDelegates: context.localizationDelegates,
-            supportedLocales: context.supportedLocales,
-            themeMode: _themeMode,
-            theme: ThemeData.light(),
-            darkTheme: ThemeData.dark(),
-            title: 'Transport_Assistant',
-            locale:context.locale,
-            home: Scaffold(
-              backgroundColor: Colors.transparent,
-              body:PageView(
-                physics: const NeverScrollableScrollPhysics(),
-                controller: _pageController,
-                onPageChanged: (index){
-                  setState(() {
-                    _slctedindex=index;
-                  });
+                  debugShowCheckedModeBanner: false,
+                  localizationsDelegates: context.localizationDelegates,
+                  supportedLocales: context.supportedLocales,
+                  themeMode: _themeMode,
+                  theme: ThemeData.light(),
+                  darkTheme: ThemeData.dark(),
+                  title: 'Transport_Assistant',
+                  locale:context.locale,
+                  home: Scaffold(
+                      backgroundColor: Colors.transparent,
+                      body:PageView(
+                          physics: const NeverScrollableScrollPhysics(),
+                          controller: _pageController,
+                          onPageChanged: (index){
+                            setState(() {
+                              _slctedindex=index;
+                            });
+                          },
+                        children: screns,
+                      ),
+                    bottomNavigationBar:Builder(
+                        builder: (context) {
+                          return BottomNavigationBar(
+                            backgroundColor:
+                            _themeMode == ThemeMode.dark ? Colors.black54 : const Color(0xff4B7BFF),
+                            selectedItemColor: Colors.white,
+                            unselectedItemColor: Color(0xffFFA726),
+                            currentIndex: _slctedindex,
+                            selectedFontSize: 20,
+                            unselectedFontSize: 16,
+                            onTap:_onchingde,
+                            items: [
+                              BottomNavigationBarItem(icon: Icon(Icons.home_filled),label: 'home'.tr()),
+                              BottomNavigationBarItem(icon: Icon(Icons.map_outlined),label: 'path'.tr()),
+                              BottomNavigationBarItem(icon: Icon(Icons.menu_outlined),label: 'options'.tr()),
+                            ],
+                          );
+                        }
+                    ),
 
-                },
-                children: screns,
+                  ),
               ),
-              bottomNavigationBar:Builder(
-                builder: (context) {
-                  return BottomNavigationBar(
-                    backgroundColor:
-                    _themeMode == ThemeMode.dark ? Colors.black54 : const Color(0xff4B7BFF),
-                    selectedItemColor: Colors.white,
-                    unselectedItemColor: Color(0xffFFA726),
-                    currentIndex: _slctedindex,
-                    selectedFontSize: 20,
-                    unselectedFontSize: 16,
-                    onTap:_onchingde,
-                    items: [
-                      BottomNavigationBarItem(icon: Icon(Icons.home_filled),label: 'home'.tr()),
-                      BottomNavigationBarItem(icon: Icon(Icons.map_outlined),label: 'path'.tr()),
-                      BottomNavigationBarItem(icon: Icon(Icons.menu_outlined),label: 'options'.tr()),
-                    ],
-                  );
-                }
-              ),
-
-            ),
-          ),
-        );
-      }
+          );
+        }
     );
   }
 }
-/*import 'package:flutter/material.dart';
-import 'package:transport_assistant/UI/OTP_screen.dart';
-import 'package:transport_assistant/UI/Taxi_lines.dart';
-import 'package:transport_assistant/UI/bus_lines.dart';
-import 'package:transport_assistant/UI/favorites_point.dart';
-import 'package:transport_assistant/UI/forget_password.dart';
-import 'package:transport_assistant/UI/navigator_barre.dart';
-import 'package:transport_assistant/UI/page_home.dart';
-import 'package:transport_assistant/UI/page_profile.dart';
-import 'package:transport_assistant/UI/page_singin.dart';
-import 'package:transport_assistant/UI/page_singup.dart';
-import 'package:transport_assistant/UI/pathline.dart';
-import 'package:transport_assistant/UI/saved_point.dart';
-import 'package:transport_assistant/UI/splash_screen.dart';
-import 'package:transport_assistant/UI/telefirek_lines.dart';
-import 'package:transport_assistant/UI/train_lines.dart';
-import 'package:transport_assistant/UI/tram_lines.dart';
-import 'package:transport_assistant/ui_pages/acount/sign_in.dart';
-
-
-void main() {
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'Security_check',
-      home: MainScreen(),
-    );
-  }
-}*/
