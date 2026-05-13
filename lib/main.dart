@@ -144,7 +144,7 @@ class _MyAppState extends State<MyApp> {
                               BottomNavigationBarItem(icon: Icon(Icons.home_filled),label: 'home'.tr()),
                               BottomNavigationBarItem(icon: Icon(Icons.map_outlined),label: 'path'.tr()),
                               BottomNavigationBarItem(icon: Icon(Icons.menu_outlined),label: 'options'.tr()),
-                            ],
+                            ],  
                           );
                         }
                     ),
