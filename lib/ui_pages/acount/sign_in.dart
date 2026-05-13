@@ -3,16 +3,16 @@ import 'package:transport_assistant/UI/navigator_barre.dart';
 import 'package:transport_assistant/UI/page_home.dart' show MapScreen;
 import 'package:transport_assistant/UI/page_singup.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class SignIn extends StatefulWidget {
+  const SignIn({super.key});
 
 
   
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignIn> createState() => _SignInState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _SignInState extends State<SignIn> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
