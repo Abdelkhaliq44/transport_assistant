@@ -196,6 +196,108 @@ class HomePageState extends State<HomePage> {
       );
     }
   }
+  Future<void> testGoogleTraffic() async {
+
+    const apiKey = "AIzaSyA2hpiRDBaCg7L1l4Qbvy9wglGRJjs2KpU";
+
+    final response = await http.post(
+      Uri.parse(
+        "https://routes.googleapis.com/directions/v2:computeRoutes",
+      ),
+
+      headers: {
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": apiKey,
+
+        // البيانات المطلوبة
+        "X-Goog-FieldMask":
+        "routes.duration,routes.staticDuration,routes.distanceMeters"
+      },
+
+      body: jsonEncode({
+
+        // نقطة البداية
+        "origin": {
+          "location": {
+            "latLng": {
+              "latitude": 36.215837,
+              "longitude": 2.879518
+            }
+          }
+        },
+
+        // نقطة النهاية
+        "destination": {
+          "location": {
+            "latLng": {
+              "latitude": 36.218053,
+              "longitude": 2.880538
+            }
+          }
+        },
+
+        "travelMode": "DRIVE",
+
+        // تفعيل الترافيك
+        "routingPreference": "TRAFFIC_AWARE"
+      }),
+    );
+
+    print("STATUS: ${response.statusCode}");
+    print("BODY: ${response.body}");
+
+    if (response.statusCode == 200) {
+
+      final data = jsonDecode(response.body);
+
+      final route = data['routes'][0];
+
+      // الوقت الحقيقي مع الازدحام
+      final duration =
+      int.parse(
+        route['duration']
+            .replaceAll("s", ""),
+      );
+
+      // الوقت بدون ازدحام
+      final staticDuration =
+      int.parse(
+        route['staticDuration']
+            .replaceAll("s", ""),
+      );
+
+      // فرق الازدحام
+      final trafficDelay =
+          duration - staticDuration;
+
+      print("🚗 REAL TIME: $duration sec");
+      print("🛣 NORMAL TIME: $staticDuration sec");
+      print("🚦 DELAY: $trafficDelay sec");
+
+      // تحليل الازدحام
+      if (trafficDelay < 60) {
+
+        print("🟢 لا يوجد ازدحام");
+
+      } else if (trafficDelay < 300) {
+
+        print("🟡 يوجد ازدحام متوسط");
+
+      } else {
+
+        print("🔴 يوجد ازدحام قوي");
+
+      }
+
+    } else {
+
+      print("❌ ERROR");
+      print(response.body);
+
+    }
+  }
+
+
   Future sendData(RouteRequest routeRequest) async {
     final response = await http.post(
       Uri.parse("http://10.222.16.227:5000/route"),
@@ -220,6 +322,8 @@ class HomePageState extends State<HomePage> {
     Future.microtask(() async {
       await loadAllRoutes();
     });
+    testGoogleTraffic();
+
 
   }
   // final firestore = FirebaseFirestore.instance;
@@ -362,6 +466,7 @@ class HomePageState extends State<HomePage> {
        Metro =metro;
       Teleferik = teleferik;
     });
+
   }
   Future<void> loadRoute(
       String type,
