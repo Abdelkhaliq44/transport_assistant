@@ -7,7 +7,6 @@ class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
 
-
   
   @override
   State<LoginScreen> createState() => _LoginScreenState();
@@ -482,7 +481,7 @@ class _GoogleIconPainter extends CustomPainter {
           fontFamily: 'Roboto',
         ),
       ),
-      textDirection: TextDirection.ltr,
+
     );
     textPainter.layout();
     textPainter.paint(
