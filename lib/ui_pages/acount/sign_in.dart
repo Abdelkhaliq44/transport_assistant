@@ -512,283 +512,283 @@ import 'package:transport_assistant/UI/navigator_barre.dart';
 import 'package:transport_assistant/UI/page_singup.dart';
 import 'package:transport_assistant/firebase/firebase_auth.dart';
 import 'dart:ui' as ui;
-class LoginScreen extends StatefulWidget {
+class SignIn extends StatefulWidget {
   final VoidCallback? onGoToHome;
-  const LoginScreen({super.key, this.onGoToHome});
+  const SignIn({super.key, this.onGoToHome});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<SignIn> createState() => _SignInState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
-final _emailController = TextEditingController();
-final _passwordController = TextEditingController();
-bool _obscurePassword = true;
+class _SignInState extends State<SignIn> {
+  final _emailController = TextEditingController();
+  final _passwordController = TextEditingController();
+  bool _obscurePassword = true;
 
-@override
-void dispose() {
-_emailController.dispose();
-_passwordController.dispose();
-super.dispose();
-}
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
 
 // ── دالة تسجيل الدخول من الكود القديم ──
-void _handleSignIn() {
-AuthHelper()
-.signIn(
-email: _emailController.text,
-password: _passwordController.text,
-)
-.then((result) {
-if (result == null) {
-widget.onGoToHome?.call();
-Navigator.pushReplacement(
-context,
-MaterialPageRoute(builder: (_) => const MainScreen()),
-);
-} else {
-ScaffoldMessenger.of(context)
-.showSnackBar(SnackBar(content: Text(result)));
-}
-});
-}
+  void _handleSignIn() {
+    AuthHelper()
+        .signIn(
+      email: _emailController.text,
+      password: _passwordController.text,
+    )
+        .then((result) {
+      if (result == null) {
+        widget.onGoToHome?.call();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const MainScreen()),
+        );
+      } else {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(result)));
+      }
+    });
+  }
 
-@override
-Widget build(BuildContext context) {
-return Scaffold(
-body: Stack(
-fit: StackFit.expand,
-children: [
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
 // ── Background ──
-_MapBackground(),
+          _MapBackground(),
 
 // ── Close button (من الكود القديم) ──
-Positioned(
-top: 40,
-right: 20,
-child: SafeArea(
-child: IconButton(
-onPressed: () => Navigator.of(context).pop(),
-icon: const Icon(Icons.clear, color: Color(0xFF1C2B4A)),
-),
-),
-),
+          Positioned(
+            top: 40,
+            right: 20,
+            child: SafeArea(
+              child: IconButton(
+                onPressed: () => Navigator.of(context).pop(),
+                icon: const Icon(Icons.clear, color: Color(0xFF1C2B4A)),
+              ),
+            ),
+          ),
 
 // ── Content ──
-SafeArea(
-child: Center(
-child: SingleChildScrollView(
-padding:
-const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-child: Column(
-mainAxisAlignment: MainAxisAlignment.center,
-children: [
+          SafeArea(
+            child: Center(
+              child: SingleChildScrollView(
+                padding:
+                const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
 // Logo
-const _TransWayLogo(),
-const SizedBox(height: 20),
+                    const _TransWayLogo(),
+                    const SizedBox(height: 20),
 
 // Title
-Text(
-'Welcome Back To TransWay',
-textAlign: TextAlign.center,
-style: const TextStyle(
-fontSize: 22,
-fontWeight: FontWeight.bold,
-color: Color(0xFF1C2B4A),
-letterSpacing: 0.2,
-),
-),
-const SizedBox(height: 32),
+                    Text(
+                      'Welcome Back To TransWay',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1C2B4A),
+                        letterSpacing: 0.2,
+                      ),
+                    ),
+                    const SizedBox(height: 32),
 
 // Email field
-_buildLabel('Email'.tr()),
-const SizedBox(height: 6),
-_buildTextField(
-controller: _emailController,
-hint: 'Enter your email',
-keyboardType: TextInputType.emailAddress,
-),
-const SizedBox(height: 18),
+                    _buildLabel('Email'.tr()),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      controller: _emailController,
+                      hint: 'Enter your email',
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 18),
 
 // Password field
-_buildLabel('Password'.tr()),
-const SizedBox(height: 6),
-_buildPasswordField(),
-const SizedBox(height: 28),
+                    _buildLabel('Password'.tr()),
+                    const SizedBox(height: 6),
+                    _buildPasswordField(),
+                    const SizedBox(height: 28),
 // Sign In button — يستدعي دالة Firebase
-SizedBox(
-width: double.infinity,
-height: 52,
-child: ElevatedButton(
-onPressed: _handleSignIn,
-style: ElevatedButton.styleFrom(
-backgroundColor: const Color(0xFF1C2B4A),
-foregroundColor: Colors.white,
-elevation: 0,
-shape: RoundedRectangleBorder(
-borderRadius: BorderRadius.circular(30),
-),
-),
-child: Text(
-'Sign In'.tr(),
-style: const TextStyle(
-color: Color(0xFFD7E4F1),
-fontSize: 16,
-fontWeight: FontWeight.w600,
-letterSpacing: 0.3,
-),
-),
-),
-),
-const SizedBox(height: 14),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _handleSignIn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1C2B4A),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: Text(
+                          'Sign In'.tr(),
+                          style: const TextStyle(
+                            color: Color(0xFFD7E4F1),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
 
 // Don't have an account?
-Row(
-mainAxisAlignment: MainAxisAlignment.center,
-children: [
-Text(
-"Don't have an account? ",
-style: const TextStyle(
-fontSize: 13,
-color: Color(0xFF1C2B4A),
-),
-),
-TextButton(
-onPressed: () {
-Navigator.push(
-context,
-MaterialPageRoute(
-builder: (_) => const SignUpScreen()),
-);
-},
-style: TextButton.styleFrom(
-padding: EdgeInsets.zero,
-minimumSize: const Size(0, 0),
-tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-),
-child: Text(
-'Sign Up'.tr(),
-style: const TextStyle(
-fontSize: 13,
-color: Color(0xFF1C2B4A),
-fontWeight: FontWeight.bold,
-decoration: TextDecoration.underline,
-),
-),
-),
-],
-),
-const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Don't have an account? ",
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF1C2B4A),
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SignUpScreen()),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 0),
+                            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'Sign Up'.tr(),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF1C2B4A),
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
 
 // OR divider
-Row(
-children: [
-const Expanded(
-child: Divider(
-color: Color(0xFF2E3E4B), thickness: 0.8),
-),
-Padding(
-padding: const EdgeInsets.symmetric(horizontal: 10),
-child: Text(
-'or',
-style: const TextStyle(
-fontSize: 13, color: Color(0xFF2E3E4B)),
-),
-),
-const Expanded(
-child: Divider(
-color: Color(0xFF2E3E4B), thickness: 0.8),
-),
-],
-),
-const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(
+                              color: Color(0xFF2E3E4B), thickness: 0.8),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            'or',
+                            style: const TextStyle(
+                                fontSize: 13, color: Color(0xFF2E3E4B)),
+                          ),
+                        ),
+                        const Expanded(
+                          child: Divider(
+                              color: Color(0xFF2E3E4B), thickness: 0.8),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
 // Sign In with Google
-SizedBox(
-width: double.infinity,
-height: 52,
-child: ElevatedButton(
-onPressed: () {
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () {
 // يمكن إضافة Google Sign-In لاحقاً
-},
-style: ElevatedButton.styleFrom(
-backgroundColor: const Color(0xFFA5B9CC),
-foregroundColor: const Color(0xFFA5B9CC),
-elevation: 1,
-shadowColor: Colors.black26,
-shape: RoundedRectangleBorder(
-borderRadius: BorderRadius.circular(30),
-),
-),
-child: Row(
-mainAxisAlignment: MainAxisAlignment.center,
-children: [
-_GoogleIcon(),
-const SizedBox(width: 10),
-const Text(
-'Sign In with Google',
-style: TextStyle(
-fontSize: 15,
-color: Color(0xFF374151),
-fontWeight: FontWeight.w500,
-),
-),
-],
-),
-),
-),
-],
-),
-),
-),
-),
-],
-),
-);
-}
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFA5B9CC),
+                          foregroundColor: const Color(0xFFA5B9CC),
+                          elevation: 1,
+                          shadowColor: Colors.black26,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _GoogleIcon(),
+                            const SizedBox(width: 10),
+                            const Text(
+                              'Sign In with Google',
+                              style: TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF374151),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-Widget _buildLabel(String text) {
-return Align(
-alignment: Alignment.centerLeft,
-child: Text(
-text,
-style: const TextStyle(
-fontSize: 14,
-fontWeight: FontWeight.w600,
-color: Color(0xFF1C2B4A),
-),
-),
-);
-}
+  Widget _buildLabel(String text) {
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF1C2B4A),
+        ),
+      ),
+    );
+  }
 
-Widget _buildTextField({
-required TextEditingController controller,
-required String hint,
-TextInputType keyboardType = TextInputType.text,
-}) {
-return TextField(
-controller: controller,
-keyboardType: keyboardType,
-style: const TextStyle(fontSize: 14, color: Color(0xFF374151)),
-decoration: InputDecoration(
-hintText: hint,
-hintStyle:
-const TextStyle(color: Colors.white60, fontSize: 14),
-filled: true,
-fillColor: Colors.white.withOpacity(0.35),
-contentPadding:
-const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-enabledBorder: OutlineInputBorder(
-borderRadius: BorderRadius.circular(30),
-borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
-),
-focusedBorder: OutlineInputBorder(
-borderRadius: BorderRadius.circular(30),
-borderSide:
-const BorderSide(color: Color(0xFF1C2B4A), width: 1.5),
-),
-),
-);
-}
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String hint,
+    TextInputType keyboardType = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      keyboardType: keyboardType,
+      style: const TextStyle(fontSize: 14, color: Color(0xFF374151)),
+      decoration: InputDecoration(
+        hintText: hint,
+        hintStyle:
+        const TextStyle(color: Colors.white60, fontSize: 14),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.35),
+        contentPadding:
+        const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(30),
+          borderSide:
+          const BorderSide(color: Color(0xFF1C2B4A), width: 1.5),
+        ),
+      ),
+    );
+  }
   Widget _buildPasswordField() {
     return TextField(
       controller: _passwordController,
