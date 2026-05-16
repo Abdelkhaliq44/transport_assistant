@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
 class TrainLinesScreen extends StatefulWidget {
-  const TrainLinesScreen({super.key});
+  final Function(String)? onSelectRoute;
+
+  TrainLinesScreen(this.onSelectRoute);
 
   @override
   State<TrainLinesScreen> createState() => _TrainLinesScreenState();
@@ -12,14 +14,15 @@ class _TrainLinesScreenState extends State<TrainLinesScreen> {
 
   // Favorite items list — index 3 is selected/highlighted
   final List<_FavoriteItem> _items = List.generate(
-    5,
+    1,
         (i) => _FavoriteItem(
-      title: 'International Conference Center',
-      subtitle: 'Abdelatif Rahal',
-      address: 'Route De Cheraga, Ain Benian, Algeries,Algeria',
+      title: ' Train d Aalger',
+
+      address: 'Place des Martyrs,Zeralda/Bou Farik/Rghaia',
       isFav: true,
       isSelected: i == 3,
     ),
+
   );
 
   @override
@@ -139,18 +142,20 @@ class _TrainLinesScreenState extends State<TrainLinesScreen> {
   // ── Favorite Card ──
   Widget _buildFavoriteCard(_FavoriteItem item, int index) {
     return GestureDetector(
+      // ✅ صحيح — onSelectRoute خارج setState وخارج الـ loop
       onTap: () {
         setState(() {
           for (int i = 0; i < _items.length; i++) {
             _items[i] = _FavoriteItem(
               title: _items[i].title,
-              subtitle: _items[i].subtitle,
               address: _items[i].address,
               isFav: _items[i].isFav,
               isSelected: i == index,
             );
           }
         });
+        // ← هنا فقط، خارج setState
+        widget.onSelectRoute?.call(_items[index].title.trim());
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -192,14 +197,7 @@ class _TrainLinesScreenState extends State<TrainLinesScreen> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    item.subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
+
                   const SizedBox(height: 4),
                   Text(
                     item.address,
@@ -216,16 +214,20 @@ class _TrainLinesScreenState extends State<TrainLinesScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: GestureDetector(
+                // ✅ صحيح — onSelectRoute خارج setState وخارج الـ loop
                 onTap: () {
                   setState(() {
-                    _items[index] = _FavoriteItem(
-                      title: item.title,
-                      subtitle: item.subtitle,
-                      address: item.address,
-                      isFav: !item.isFav, // 🔥 تبديل الحالة
-                      isSelected: item.isSelected,
-                    );
+                    for (int i = 0; i < _items.length; i++) {
+                      _items[i] = _FavoriteItem(
+                        title: _items[i].title,
+                        address: _items[i].address,
+                        isFav: _items[i].isFav,
+                        isSelected: i == index,
+                      );
+                    }
                   });
+                  // ← هنا فقط، خارج setState
+                  widget.onSelectRoute?.call(_items[index].title.trim());
                 },
                 child: Icon(
                   item.isFav ? Icons.favorite : Icons.favorite_border,
@@ -240,7 +242,7 @@ class _TrainLinesScreenState extends State<TrainLinesScreen> {
     );
   }
 
-  // ── Bottom Navigation Bar ──
+// ── Bottom Navigation Bar ──
 
 }
 
@@ -249,14 +251,12 @@ class _TrainLinesScreenState extends State<TrainLinesScreen> {
 // ─────────────────────────────────────────────
 class _FavoriteItem {
   final String title;
-  final String subtitle;
   final String address;
   final bool isFav;
   final bool isSelected;
 
   _FavoriteItem({
     required this.title,
-    required this.subtitle,
     required this.address,
     required this.isFav,
     required this.isSelected,

@@ -12,11 +12,10 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
 
   // Favorite items list — index 3 is selected/highlighted
   final List<_FavoriteItem> _items = List.generate(
-    5,
+    1,
         (i) => _FavoriteItem(
-      title: 'International Conference Center',
-      subtitle: 'Abdelatif Rahal',
-      address: 'Route De Cheraga, Ain Benian, Algeries,Algeria',
+      title: 'Taxi Ain Mlila',
+      address: 'Toufil,Sonelgaz',
       isFav: true,
       isSelected: i == 3,
     ),
@@ -144,7 +143,6 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
           for (int i = 0; i < _items.length; i++) {
             _items[i] = _FavoriteItem(
               title: _items[i].title,
-              subtitle: _items[i].subtitle,
               address: _items[i].address,
               isFav: _items[i].isFav,
               isSelected: i == index,
@@ -192,14 +190,7 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    item.subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
+
                   const SizedBox(height: 4),
                   Text(
                     item.address,
@@ -220,7 +211,6 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
                   setState(() {
                     _items[index] = _FavoriteItem(
                       title: item.title,
-                      subtitle: item.subtitle,
                       address: item.address,
                       isFav: !item.isFav, // 🔥 تبديل الحالة
                       isSelected: item.isSelected,
@@ -240,7 +230,7 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
     );
   }
 
-  // ── Bottom Navigation Bar ──
+// ── Bottom Navigation Bar ──
 
 }
 
@@ -249,14 +239,12 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
 // ─────────────────────────────────────────────
 class _FavoriteItem {
   final String title;
-  final String subtitle;
   final String address;
   final bool isFav;
   final bool isSelected;
 
   _FavoriteItem({
     required this.title,
-    required this.subtitle,
     required this.address,
     required this.isFav,
     required this.isSelected,

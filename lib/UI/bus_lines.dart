@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
 class BusLinesScreen extends StatefulWidget {
-  const BusLinesScreen({super.key});
+  final Function(String)? onSelectRoute;
+  const BusLinesScreen({super.key, this.onSelectRoute});
 
   @override
   State<BusLinesScreen> createState() => _BusLinesScreenState();
@@ -11,16 +12,43 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
   int _selectedNavIndex = 1; // Favorites is selected
 
   // Favorite items list — index 3 is selected/highlighted
-  final List<_FavoriteItem> _items = List.generate(
-    5,
-        (i) => _FavoriteItem(
-      title: 'International Conference Center',
-      subtitle: 'Abdelatif Rahal',
-      address: 'Route De Cheraga, Ain Benian, Algeries,Algeria',
+  final List<_FavoriteItem> _items = [
+    _FavoriteItem(
+      title: ' L608A',
+
+      address: 'Dergana,Haach',
       isFav: true,
-      isSelected: i == 3,
+      isSelected: false,
     ),
-  );
+
+    _FavoriteItem(
+      title: 'L58',
+      address: 'Place des Martyrs,chevally',
+      isFav: true,
+      isSelected: true,
+    ),
+
+    _FavoriteItem(
+      title: 'L12',
+      address: 'Staoueli,Place des Martyrs',
+      isFav: false,
+      isSelected: false,
+    ),
+
+    _FavoriteItem(
+      title: 'L36',
+      address: 'Beaux Arts,Basta ALi',
+      isFav: true,
+      isSelected: false,
+    ),
+
+    _FavoriteItem(
+      title: 'L89A',
+      address: 'kouba,Place du 1er Mai',
+      isFav: false,
+      isSelected: false,
+    ),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -139,18 +167,21 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
   // ── Favorite Card ──
   Widget _buildFavoriteCard(_FavoriteItem item, int index) {
     return GestureDetector(
+      // ✅ صحيح — onSelectRoute خارج setState وخارج الـ loop
       onTap: () {
+        print("🟢 تم الضغط على: ${_items[index].title.trim()}"); // ← أضف هذا
         setState(() {
           for (int i = 0; i < _items.length; i++) {
             _items[i] = _FavoriteItem(
               title: _items[i].title,
-              subtitle: _items[i].subtitle,
               address: _items[i].address,
               isFav: _items[i].isFav,
               isSelected: i == index,
             );
           }
         });
+        widget.onSelectRoute?.call(_items[index].title.trim());
+        Navigator.pop(context);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -192,14 +223,7 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    item.subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
+
                   const SizedBox(height: 4),
                   Text(
                     item.address,
@@ -216,16 +240,21 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: GestureDetector(
+                // ✅ صحيح — onSelectRoute خارج setState وخارج الـ loop
                 onTap: () {
+                  print("🟢 تم الضغط على: ${_items[index].title.trim()}"); // ← أضف هذا
                   setState(() {
-                    _items[index] = _FavoriteItem(
-                      title: item.title,
-                      subtitle: item.subtitle,
-                      address: item.address,
-                      isFav: !item.isFav, // 🔥 تبديل الحالة
-                      isSelected: item.isSelected,
-                    );
+                    for (int i = 0; i < _items.length; i++) {
+                      _items[i] = _FavoriteItem(
+                        title: _items[i].title,
+                        address: _items[i].address,
+                        isFav: _items[i].isFav,
+                        isSelected: i == index,
+                      );
+                    }
                   });
+                  widget.onSelectRoute?.call(_items[index].title.trim());
+                  Navigator.pop(context);
                 },
                 child: Icon(
                   item.isFav ? Icons.favorite : Icons.favorite_border,
@@ -248,15 +277,14 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
 // Data Models
 // ─────────────────────────────────────────────
 class _FavoriteItem {
+
   final String title;
-  final String subtitle;
   final String address;
   final bool isFav;
   final bool isSelected;
 
   _FavoriteItem({
     required this.title,
-    required this.subtitle,
     required this.address,
     required this.isFav,
     required this.isSelected,

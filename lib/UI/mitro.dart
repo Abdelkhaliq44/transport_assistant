@@ -12,11 +12,11 @@ class _MitroLinesScreenState extends State<MitroLinesScreen> {
 
   // Favorite items list — index 3 is selected/highlighted
   final List<_FavoriteItem> _items = List.generate(
-    5,
+    1,
         (i) => _FavoriteItem(
-      title: 'International Conference Center',
-      subtitle: 'Abdelatif Rahal',
-      address: 'Route De Cheraga, Ain Benian, Algeries,Algeria',
+      title: 'Metro d Alger',
+
+      address: 'Place des Martyrs,Harach/Ain Naadja',
       isFav: true,
       isSelected: i == 3,
     ),
@@ -144,7 +144,6 @@ class _MitroLinesScreenState extends State<MitroLinesScreen> {
           for (int i = 0; i < _items.length; i++) {
             _items[i] = _FavoriteItem(
               title: _items[i].title,
-              subtitle: _items[i].subtitle,
               address: _items[i].address,
               isFav: _items[i].isFav,
               isSelected: i == index,
@@ -192,14 +191,7 @@ class _MitroLinesScreenState extends State<MitroLinesScreen> {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    item.subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
+
                   const SizedBox(height: 4),
                   Text(
                     item.address,
@@ -220,7 +212,6 @@ class _MitroLinesScreenState extends State<MitroLinesScreen> {
                   setState(() {
                     _items[index] = _FavoriteItem(
                       title: item.title,
-                      subtitle: item.subtitle,
                       address: item.address,
                       isFav: !item.isFav, // 🔥 تبديل الحالة
                       isSelected: item.isSelected,
@@ -249,14 +240,12 @@ class _MitroLinesScreenState extends State<MitroLinesScreen> {
 // ─────────────────────────────────────────────
 class _FavoriteItem {
   final String title;
-  final String subtitle;
   final String address;
   final bool isFav;
   final bool isSelected;
 
   _FavoriteItem({
     required this.title,
-    required this.subtitle,
     required this.address,
     required this.isFav,
     required this.isSelected,

@@ -1,4 +1,4 @@
-import 'package:firebase_core/firebase_core.dart';
+/*import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:transport_assistant/ui_pages/home_page.dart';
 import 'package:transport_assistant/ui_pages/line_page.dart';
@@ -153,6 +153,60 @@ class _MyAppState extends State<MyApp> {
               ),
           );
         }
+    );
+  }
+}*/
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'firebase_options.dart';
+import 'package:transport_assistant/UI/navigator_barre.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await EasyLocalization.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+  runApp(
+    EasyLocalization(
+      supportedLocales: [Locale('en'), Locale('ar'), Locale('fr')],
+      path: 'assets/lang',
+      fallbackLocale: Locale('en'),
+      child: const MyApp(),
+    ),
+  );
+}
+
+class MyApp extends StatefulWidget {
+  const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDark = false;
+
+  void _onThemeChanged(bool val) {
+    setState(() => _isDark = val);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+      debugShowCheckedModeBanner: false,
+      localizationsDelegates: context.localizationDelegates,
+      supportedLocales: context.supportedLocales,
+      locale: context.locale,
+      title: 'Transport_Assistant',
+      themeMode: _isDark ? ThemeMode.dark : ThemeMode.light,
+      theme: ThemeData.light(),
+      darkTheme: ThemeData.dark(),
+      home: MainScreen(
+        isDark: _isDark,
+        onThemeChanged: _onThemeChanged,
+      ),
     );
   }
 }

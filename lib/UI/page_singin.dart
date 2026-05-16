@@ -81,8 +81,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: ElevatedButton(
                         onPressed: () {Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (_) => const MainScreen()),
-                          );
+                          MaterialPageRoute(builder: (_) => MainScreen(
+                            isDark: false,
+                            onThemeChanged: (val) {},
+                          )),
+                        );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF1C2B4A),

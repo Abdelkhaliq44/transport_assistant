@@ -8,7 +8,8 @@ import 'package:transport_assistant/UI/train_lines.dart';
 import 'package:transport_assistant/UI/tram_lines.dart';
 
 class PathLinesScreen extends StatefulWidget {
-  const PathLinesScreen({super.key});
+  final Function(String)? onSelectRoute;
+  const PathLinesScreen({super.key, this.onSelectRoute});
 
   @override
   State<PathLinesScreen> createState() => _PathLinesScreenState();
@@ -16,15 +17,20 @@ class PathLinesScreen extends StatefulWidget {
 
 class _PathLinesScreenState extends State<PathLinesScreen> {
 
+  final List<_PathItem> _items = [];
 
-  final List<_PathItem> _items = [
-    _PathItem(label: 'Taxi Line',     icon: FontAwesomeIcons.taxi,        page: const TaxiLinesScreen()),
-    _PathItem(label: 'Bus Line',      icon: FontAwesomeIcons.bus,         page: const BusLinesScreen()),
-    _PathItem(label: 'Train Line',    icon: FontAwesomeIcons.train,       page: const TrainLinesScreen()),
-    _PathItem(label: 'Tram Line',     icon: FontAwesomeIcons.trainTram,   page: const TramLinesScreen()),
-    _PathItem(label: 'Metro Line',    icon: FontAwesomeIcons.trainSubway, page: const MitroLinesScreen()),
-    _PathItem(label: 'Telefirik Line',icon: FontAwesomeIcons.cableCar,    page: const TeleferikLinesScreen()),
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _items.addAll([
+      _PathItem(label: 'Taxi Line',      icon: FontAwesomeIcons.taxi,        page: const TaxiLinesScreen()),
+      _PathItem(label: 'Bus Line',       icon: FontAwesomeIcons.bus,         page: BusLinesScreen(onSelectRoute: widget.onSelectRoute)),
+      _PathItem(label: 'Train Line',     icon: FontAwesomeIcons.train,       page: TrainLinesScreen(widget.onSelectRoute)),
+      _PathItem(label: 'Tram Line',      icon: FontAwesomeIcons.trainTram,   page: const TramLinesScreen()),
+      _PathItem(label: 'Metro Line',     icon: FontAwesomeIcons.trainSubway, page: const MitroLinesScreen()),
+      _PathItem(label: 'Telefirik Line', icon: FontAwesomeIcons.cableCar,    page: const TeleferikLinesScreen()),
+    ]);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -139,11 +145,13 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
   // ─────────────────────────────────────────────
   Widget _buildCard(_PathItem item) {
     return GestureDetector(
-      onTap: () {
-        Navigator.push(
+      onTap: () async {
+        await Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => item.page),
         );
+        // ← بعد الرجوع من BusLinesScreen تلقائياً يرجع هنا
+        // لا تحتاج شيئاً إضافياً — الـ callback في MainScreen يتولى الباقي
       },
       child: Container(
         decoration: BoxDecoration(
