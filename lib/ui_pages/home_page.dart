@@ -1834,42 +1834,6 @@ class HomePageState extends State<HomePage> {
               ),
             ),
           ),
-          const SizedBox(height: 10),
-
-// Back button
-          SizedBox(
-            width: double.infinity,
-            height: 46,
-            child: TextButton(
-              onPressed: () {
-                setState(() {
-                  _showGetLine = false;
-                  _showSearch = true;
-                });
-              },
-              style: TextButton.styleFrom(
-                side: const BorderSide(color: Color(0xFF3A4F65), width: 1),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(23),
-                ),
-              ),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: Colors.white70),
-                  SizedBox(width: 6),
-                  Text(
-                    'Back',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white70,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
         ],
       ),
     );
