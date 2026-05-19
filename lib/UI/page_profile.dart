@@ -91,7 +91,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     if (!mounted) return;
     Navigator.pushReplacement(
       context,
-      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      MaterialPageRoute(builder: (_) => const SignIn()),
     );
   }
 

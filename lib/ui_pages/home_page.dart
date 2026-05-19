@@ -146,9 +146,9 @@ class HomePageState extends State<HomePage> {
   final List<FaIconData> _transportIcons = [
     FontAwesomeIcons.taxi,
     FontAwesomeIcons.bus,
-    FontAwesomeIcons.train,
-    FontAwesomeIcons.trainTram,
     FontAwesomeIcons.trainSubway,
+    FontAwesomeIcons.trainTram,
+    FontAwesomeIcons.train,
     FontAwesomeIcons.cableCar,
   ];
 
@@ -171,6 +171,7 @@ class HomePageState extends State<HomePage> {
   List<LatLng> Metro = [];
   List<LatLng> Tram = [];
   List<LatLng> Teleferik = [];
+  List<LatLng> taxi = [];
 
   List<Marker> taxiMarkers = [];
   List<Marker> busMarkers = [];
@@ -382,6 +383,7 @@ class HomePageState extends State<HomePage> {
 
   // ── API calls ───────────────────────────────────────────────────────────────
   Future<void> selectLines() async {
+    print("🟠 selectLines بدأت");
     lineSelectionRequest
       ..lat1 = routeRequest.lat1
       ..long1 = routeRequest.long1
@@ -396,6 +398,9 @@ class HomePageState extends State<HomePage> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(lineSelectionRequest.toJson()),
       );
+      print("🟠 status: ${response.statusCode}");
+      print("🟠 body: ${response.body}");
+
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final routes = data['data']['routes'] as List;
@@ -407,6 +412,7 @@ class HomePageState extends State<HomePage> {
         _snack("فشل في جلب الخطوط: ${response.statusCode}");
       }
     } catch (e) {
+      print("🟠 خطأ: $e");
       _snack("خطأ في الاتصال: $e");
     }
   }
@@ -490,13 +496,28 @@ class HomePageState extends State<HomePage> {
   Future<void> onSelectRoute(String lineName) async {
     print("🔴 onSelectRoute نُودي بـ: $lineName");
 
+    // ← امسح كل الخطوط والماركرز أولاً
+    setState(() {
+      L36 = []; L58 = []; L89 = []; L608 = [];
+      L12 = []; Tram = []; Metro = []; Teleferik = []; taxi = [];
+
+      L36Markers = []; L58Markers = []; L89Markers = [];
+      L608Markers = []; L12Markers = []; tramMarkers = [];
+      metroMarkers = []; teleferikMarkers = [];
+      taxiMarkers = []; busMarkers = []; tranMarkers = [];
+    });
+
+    // ← إذا كان taxi استدعي loadRoute مباشرة كما يفعل الزر
+    if (lineName == 'taxi') {
+      await loadRoute('taxi');
+      return;
+    }
+
     final routePoints = await loadRouteFromFirebase(lineName, 'points', 'routes');
     print("📍 عدد النقاط: ${routePoints.length}");
 
     final markerPoints = await loadRouteFromFirebase(lineName, 'marker', 'routes');
     print("📌 عدد الماركرز: ${markerPoints.length}");
-
-    await buildMarkers(lineName, markerPoints);
 
     setState(() {
       switch (lineName) {
@@ -505,7 +526,6 @@ class HomePageState extends State<HomePage> {
           break;
         case 'L58':
           L58 = routePoints;
-          print("✅ L58 تم تعيينها: ${L58.length} نقطة");
           break;
         case 'L89A':
           L89 = routePoints;
@@ -528,7 +548,9 @@ class HomePageState extends State<HomePage> {
       }
     });
 
-    // ← تحريك الكاميرا لموقع الخط
+    await buildMarkers(lineName, markerPoints);
+
+    // ← حرّك الكاميرا لموقع الخط
     if (markerPoints.isNotEmpty) {
       _mapController.move(markerPoints.first, 14);
     } else if (routePoints.isNotEmpty) {
@@ -545,18 +567,39 @@ class HomePageState extends State<HomePage> {
     await loadRoute('tram');
     await loadRoute('metro');
     await loadRoute('teleferik');
-
+    await loadRoute('taxi');
     await buildMarkers('tran', Tran_station);
   }
 
   Future<void> loadRoute(String type) async {
+    print("🟡 loadRoute نُودي بـ: $type");
     final points = await loadRouteFromFirebase(type, 'points', 'routes');
+    print("🟡 points: ${points.length}");
     final markers = await loadRouteFromFirebase(type, 'marker', 'routes');
+    print("🟡 markers: ${markers.length}");
+
     setState(() {
-      routePoints = points;
+      switch (type) {
+        case 'L36': L36 = points; break;
+        case 'L58': L58 = points; break;
+        case 'L89A': L89 = points; break;
+        case 'L608A': L608 = points; break;
+        case 'L12': L12 = points; break;
+        case 'tram': Tram = points; break;
+        case 'metro': Metro = points; break;
+        case 'teleferik': Teleferik = points; break;
+        case 'taxi': taxi = points; break;
+        default: routePoints = points; break;
+      }
     });
+
     await buildMarkers(type, markers);
-    if (markers.isNotEmpty) _mapController.move(markers.first, 18);
+
+    if (markers.isNotEmpty) {
+      _mapController.move(markers.first, 14);
+    } else if (points.isNotEmpty) {
+      _mapController.move(points.first, 14);
+    }
   }
 
   Future<void> saveRouteToFirebase(String type, String choice, List<LatLng> points) async {
@@ -571,71 +614,129 @@ class HomePageState extends State<HomePage> {
     final temp = list
         .map((pt) => Marker(
       point: pt,
-      width: 40,
-      height: 40,
-      child: CircleAvatar(backgroundColor: Colors.black45, child: getIcon(type)),
+      width: 44,
+      height: 44,
+      child: Container(
+        decoration: BoxDecoration(
+          color: _getMarkerColor(type),
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: _getMarkerColor(type).withOpacity(0.4),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            )
+          ],
+        ),
+        child: Center(child: getIcon(type)),
+      ),
     ))
         .toList();
 
     setState(() {
-      if (type == "taxi") {
-        taxiMarkers = temp;
-        busMarkers.clear();
-      }
-      if (type == "bus") {
-        busMarkers = temp;
-        taxiMarkers.clear();
-      }
+      if (type == "taxi") { taxiMarkers = temp; busMarkers.clear(); }
+      if (type == "bus") { busMarkers = temp; taxiMarkers.clear(); }
       if (type == "tram") tramMarkers = temp;
       if (type == "metro") metroMarkers = temp;
       if (type == "teleferik") teleferikMarkers = temp;
       if (type == "tran") tranMarkers = temp;
       if (type == "L12") L12Markers = temp;
       if (type == "L58") L58Markers = temp;
-      if (type == "L608") L608Markers = temp;
+      if (type == "L608A") L608Markers = temp;
       if (type == "L36") L36Markers = temp;
-      if (type == "L89") L89Markers = temp;
+      if (type == "L89A") L89Markers = temp;
     });
+  }
+
+  Color _getMarkerColor(String type) {
+    switch (type) {
+      case "taxi":      return const Color(0xFFFFC107); // أصفر
+      case "bus":
+      case "L12":
+      case "L36":
+      case "L58":
+      case "L608A":
+      case "L89A":      return const Color(0xFF1565C0); // أزرق غامق
+      case "tram":      return const Color(0xFF6A1B9A); // بنفسجي
+      case "metro":     return const Color(0xFFBF360C); // برتقالي غامق
+      case "teleferik": return const Color(0xFF00695C); // أخضر غامق
+      case "tran":      return const Color(0xFFC62828); // أحمر
+      default:          return const Color(0xFF37474F);
+    }
   }
 
   Widget getIcon(String type) {
     switch (type) {
       case "taxi":
-        return const Icon(Icons.local_taxi, color: Colors.greenAccent);
+        return const FaIcon(FontAwesomeIcons.taxi, color: Colors.white, size: 20);
       case "bus":
-        return const Icon(Icons.directions_bus, color: Colors.blueAccent);
+        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
       case "tram":
-        return const Icon(Icons.tram, color: Colors.deepPurple);
+        return const FaIcon(FontAwesomeIcons.trainTram, color: Colors.white, size: 20);
       case "metro":
-        return const Icon(Icons.directions_subway, color: Colors.deepOrangeAccent);
+        return const FaIcon(FontAwesomeIcons.train, color: Colors.white, size: 20);
       case "teleferik":
-        return FaIcon(FontAwesomeIcons.cableCar, color: Colors.pink);
+        return const FaIcon(FontAwesomeIcons.cableCar, color: Colors.white, size: 20);
       case "tran":
-        return FaIcon(FontAwesomeIcons.train, color: Colors.pink);
+        return const FaIcon(FontAwesomeIcons.trainSubway, color: Colors.white, size: 20);
       case "L12":
-        return const Icon(Icons.label_important, color: Colors.deepOrangeAccent);
+        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
       case "L36":
-        return const Icon(Icons.offline_bolt, color: Colors.lightGreenAccent);
+        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
       case "L58":
-        return const Icon(Icons.adb_outlined, color: Colors.white12);
-      case "L608":
-        return const Icon(Icons.move_down, color: Colors.deepOrangeAccent);
-      case "L89":
-        return const Icon(Icons.tsunami, color: Colors.lightGreenAccent);
+        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
+      case "L608A":
+        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
+      case "L89A":
+        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
       default:
-        return const Icon(Icons.help);
+        return const FaIcon(FontAwesomeIcons.locationDot, color: Colors.white, size: 20);
     }
   }
+
+
 
   // ── Map interactions ─────────────────────────────────────────────────────────
   Future<void> _onTransportSelected(int index) async {
     setState(() {
       _selectedTransport = index;
+      // ← امسح كل الخطوط والماركرز أولاً
+      L36 = []; L58 = []; L89 = []; L608 = [];
+      L12 = []; Tram = []; Metro = []; Teleferik = []; taxi = [];
+      L36Markers = []; L58Markers = []; L89Markers = [];
+      L608Markers = []; L12Markers = []; tramMarkers = [];
+      metroMarkers = []; teleferikMarkers = [];
+      taxiMarkers = []; busMarkers = []; tranMarkers = [];
     });
-    const typeMap = ['taxi', 'bus', 'tram', 'metro', 'teleferik', 'tran'];
-    if (index < typeMap.length) {
-      await loadRoute(typeMap[index]);
-      routeRequest.document = typeMap[index];
+
+    switch (index) {
+      case 0: // ← taxi
+        await loadRoute('taxi');
+        break;
+
+      case 1: // ← bus — كل خطوط الباص
+        await loadRoute('L36');
+        await loadRoute('L58');
+        await loadRoute('L89A');
+        await loadRoute('L608A');
+        await loadRoute('L12');
+        break;
+
+      case 2: // ← train
+        await loadRoute('tran');
+        break;
+
+      case 3: // ← tram
+        await loadRoute('tram');
+        break;
+
+      case 4: // ← metro
+        await loadRoute('metro');
+        break;
+
+      case 5: // ← teleferik
+        await loadRoute('teleferik');
+        break;
     }
   }
 
@@ -773,8 +874,46 @@ class HomePageState extends State<HomePage> {
       _snack("location_permission_denied_forever".tr());
       return;
     }
-    final pos = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
-    _mapController.move(LatLng(pos.latitude, pos.longitude), 17);
+    final pos = await Geolocator.getCurrentPosition(
+      desiredAccuracy: LocationAccuracy.high,
+    );
+    final myLocation = LatLng(pos.latitude, pos.longitude);
+
+    // ← حرّك الكاميرا
+    _mapController.move(myLocation, 17);
+
+    // ← أضف marker على موقعك
+    setState(() {
+      _Markers
+        ..clear()
+        ..add(
+          Marker(
+            point: myLocation,
+            width: 60,
+            height: 60,
+            child: Column(
+              children: [
+                Container(
+                  width: 20,
+                  height: 20,
+                  decoration: BoxDecoration(
+                    color: Colors.blue,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 3),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.blue.withOpacity(0.4),
+                        blurRadius: 8,
+                        spreadRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+    });
   }
 
   Future<void> _checkPermission() async {
@@ -824,7 +963,7 @@ class HomePageState extends State<HomePage> {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
 
   // ── Route Card logic ─────────────────────────────────────────────────────────
-  void _showRouteAlert() {
+  void _showRouteAlert() async {
     final startText = _startController.text.trim();
     final endText = _endController.text.trim();
 
@@ -833,10 +972,28 @@ class HomePageState extends State<HomePage> {
       return;
     }
 
-    setState(() {
-      _showGetLine = false;
-      _showRouteCard = true;
-    });
+    // ← استدعي الـ agent أولاً
+    await selectLines();
+
+    // ← ثم أظهر الـ alert
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) => SafeArea(
+        child: _buildGetLineAlert(
+          startText,
+          endText,
+          onTraceLine: () {
+            Navigator.pop(ctx);
+            setState(() {
+              _showGetLine = false;
+              _showRouteCard = true;
+            });
+          },
+        ),
+      ),
+    );
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -845,6 +1002,7 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           // ── 1. Map ──────────────────────────────────────────────────────────
@@ -907,6 +1065,10 @@ class HomePageState extends State<HomePage> {
                   PolylineLayer(polylines: [
                     Polyline(points: Teleferik, color: Colors.black, strokeWidth: 4)
                   ]),
+                if (taxi.isNotEmpty)
+                  PolylineLayer(polylines: [
+                    Polyline(points: taxi, color: Colors.pink, strokeWidth: 4)
+                  ]),
                 MarkerLayer(markers: metroMarkers),
                 MarkerLayer(markers: taxiMarkers),
                 MarkerLayer(markers: busMarkers),
@@ -931,42 +1093,36 @@ class HomePageState extends State<HomePage> {
                   child: _buildActivePanel(),
                 ),
                 Expanded(
-                  child: Stack(
-                    children: [
-                      // Transport buttons (right)
-                      Positioned(
-                        right: 12,
-                        bottom: 8,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: List.generate(
-                            _transportIcons.length,
-                                (i) => _buildTransportButton(i),
-                          ).reversed.toList(),
-                        ),
-                      ),
-                      // Map controls (left)
-                      Positioned(
-                        left: 12,
-                        bottom: 8,
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            _mapFab("loc", Icons.my_location, _goToMyLocation),
-                            const SizedBox(height: 8),
-                            _mapFab("zoom_in", Icons.add, _zoomIn),
-                            const SizedBox(height: 8),
-                            _mapFab("zoom_out", Icons.remove, _zoomOut),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                 child: Stack(
+                children: []))
               ],
             ),
           ),
-
+          Positioned(
+            right: 8,
+            bottom: 1,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: List.generate(
+                _transportIcons.length,
+                    (i) => _buildTransportButton(i),
+              ).reversed.toList(),
+            ),
+          ),
+          Positioned(
+            left: 12,
+            bottom: 8,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _mapFab("loc", Icons.my_location, _goToMyLocation),
+                const SizedBox(height: 8),
+                _mapFab("zoom_in", Icons.add, _zoomIn),
+                const SizedBox(height: 8),
+                _mapFab("zoom_out", Icons.remove, _zoomOut),
+              ],
+            ),
+          ),
           // ── 3. Location Card ────────────────────────────────────────────────
           if (_showLocationCard && _selectedAddress != null)
             Positioned(
@@ -1017,106 +1173,109 @@ class HomePageState extends State<HomePage> {
                       ),
                     ),
                     const Expanded(child: SizedBox.shrink()),
-                    AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      transitionBuilder: (child, anim) => SlideTransition(
-                        position: Tween<Offset>(
-                          begin: const Offset(0, 0.3),
-                          end: Offset.zero,
-                        ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
-                        child: FadeTransition(opacity: anim, child: child),
-                      ),
-                      child: _pendingPickerAddress != null
-                          ? Container(
-                        key: ValueKey(_pendingPickerAddress),
-                        margin: const EdgeInsets.symmetric(horizontal: 24),
-                        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF1C2B3A),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                              color: const Color(0xFF4A9EFF), width: 1.5),
-                          boxShadow: [
-                            BoxShadow(
-                              color: const Color(0xFF4A9EFF).withOpacity(0.25),
-                              blurRadius: 12,
-                              offset: const Offset(0, 4),
-                            )
-                          ],
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(50,0,50,0),
+                      child: AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 300),
+                        transitionBuilder: (child, anim) => SlideTransition(
+                          position: Tween<Offset>(
+                            begin: const Offset(0, 0.3),
+                            end: Offset.zero,
+                          ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+                          child: FadeTransition(opacity: anim, child: child),
                         ),
-                        child: Row(
-                          children: [
-                            Container(
-                              width: 36,
-                              height: 36,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFF4A9EFF).withOpacity(0.15),
-                                shape: BoxShape.circle,
+                        child: _pendingPickerAddress != null
+                            ? Container(
+                          key: ValueKey(_pendingPickerAddress),
+                          margin: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF1C2B3A),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                                color: const Color(0xFF4A9EFF), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF4A9EFF).withOpacity(0.25),
+                                blurRadius: 12,
+                                offset: const Offset(0, 4),
+                              )
+                            ],
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFF4A9EFF).withOpacity(0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.location_on,
+                                    color: Color(0xFF4A9EFF), size: 20),
                               ),
-                              child: const Icon(Icons.location_on,
-                                  color: Color(0xFF4A9EFF), size: 20),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    _pickerTarget == 'start'
-                                        ? 'نقطة الانطلاق'
-                                        : 'نقطة الوصول',
-                                    style: const TextStyle(
-                                      color: Color(0xFF4A9EFF),
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w600,
-                                      letterSpacing: 0.5,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _pickerTarget == 'start'
+                                          ? 'نقطة الانطلاق'
+                                          : 'نقطة الوصول',
+                                      style: const TextStyle(
+                                        color: Color(0xFF4A9EFF),
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        letterSpacing: 0.5,
+                                      ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 3),
-                                  Text(
-                                    _pendingPickerAddress!,
-                                    style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 13,
-                                        fontWeight: FontWeight.w500),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ],
+                                    const SizedBox(height: 3),
+                                    Text(
+                                      _pendingPickerAddress!,
+                                      style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 13,
+                                          fontWeight: FontWeight.w500),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      )
-                          : Container(
-                        key: const ValueKey('hint'),
-                        margin: const EdgeInsets.symmetric(horizontal: 24),
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 18, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF2E3E4B).withOpacity(0.88),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Icons.touch_app,
-                                color: Colors.white70, size: 18),
-                            const SizedBox(width: 8),
-                            Text(
-                              _pickerTarget == 'start'
-                                  ? 'اضغط على نقطة الانطلاق'
-                                  : 'اضغط على نقطة الوصول',
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 13),
-                            ),
-                          ],
+                            ],
+                          ),
+                        )
+                            : Container(
+                          key: const ValueKey('hint'),
+                          margin: const EdgeInsets.symmetric(horizontal: 24),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 18, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFF2E3E4B).withOpacity(0.88),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.touch_app,
+                                  color: Colors.white70, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                _pickerTarget == 'start'
+                                    ? 'اضغط على نقطة الانطلاق'
+                                    : 'اضغط على نقطة الوصول',
+                                style: const TextStyle(
+                                    color: Colors.white, fontSize: 13),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
                     const SizedBox(height: 12),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 0, 24, 28),
+                      padding: const EdgeInsets.fromLTRB(70, 0, 70, 28),
                       child: SizedBox(
                         width: double.infinity,
                         height: 50,
@@ -1436,7 +1595,6 @@ class HomePageState extends State<HomePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Start point
           // Start + End points مع دوائر متناسقة
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1541,29 +1699,6 @@ class HomePageState extends State<HomePage> {
             ),
           ),
           const SizedBox(height: 10),
-
-          // Suggest lines button
-          SizedBox(
-            width: double.infinity,
-            height: 40,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                await selectLines();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.deepPurple,
-                elevation: 0,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-              ),
-              icon: const Icon(Icons.route, color: Colors.white, size: 16),
-              label: const Text(
-                "اقترح أفضل خط",
-                style: TextStyle(
-                    fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
-              ),
-            ),
-          ),
-
           // Suggested lines list — محدودة الارتفاع لمنع الـ overflow
           if (_showLineSelector && suggestedLines.isNotEmpty) ...[
             const SizedBox(height: 10),
@@ -1653,7 +1788,38 @@ class HomePageState extends State<HomePage> {
             width: double.infinity,
             height: 46,
             child: ElevatedButton(
-              onPressed: _showRouteAlert,
+              onPressed: () async {
+                final startText = _startController.text.trim();
+                final endText = _endController.text.trim();
+
+                if (startText.isEmpty || endText.isEmpty) {
+                  _snack("يرجى تحديد نقطة البداية ونقطة الوصول أولاً");
+                  return;
+                }
+
+                // ← استدعي الـ agent أولاً
+                await selectLines();
+
+                // ← ثم أظهر الـ alert
+                showModalBottomSheet(
+                  context: context,
+                  backgroundColor: Colors.transparent,
+                  isScrollControlled: true,
+                  builder: (ctx) => SafeArea(
+                    child: _buildGetLineAlert(
+                      startText,
+                      endText,
+                      onTraceLine: () {
+                        Navigator.pop(ctx);
+                        setState(() {
+                          _showGetLine = false;
+                          _showRouteCard = true;
+                        });
+                      },
+                    ),
+                  ),
+                );
+              },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFBECFDF),
                 elevation: 0,
@@ -1665,6 +1831,232 @@ class HomePageState extends State<HomePage> {
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF2E3E4B)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+// Back button
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _showGetLine = false;
+                  _showSearch = true;
+                });
+              },
+              style: TextButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF3A4F65), width: 1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(23),
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: Colors.white70),
+                  SizedBox(width: 6),
+                  Text(
+                    'Back',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  Widget _buildGetLineAlert(
+      String startText,
+      String endText, {
+        required VoidCallback onTraceLine,
+      }) {
+    return Container(
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1C2B3A),
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(color: Colors.black45, blurRadius: 20, offset: Offset(0, -4)),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle bar
+          Center(
+            child: Container(
+              width: 36,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 18),
+              decoration: BoxDecoration(
+                color: Colors.white24,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+
+          // Card المسار
+
+
+          const SizedBox(height: 16),
+
+          // ← Cards الخطوط المقترحة من الـ agent
+          if (suggestedLines.isNotEmpty) ...[
+            Align(
+              alignment: Alignment.centerRight,
+              child: Text(
+                "الخطوط المقترحة:",
+                style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 200),
+              child: ListView.builder(
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                itemCount: suggestedLines.length,
+                itemBuilder: (_, i) {
+                  final line = suggestedLines[i];
+                  return GestureDetector(
+                    onTap: () async {
+                      Navigator.pop(context);
+                      // ← اختر هذا الخط مباشرة
+                      await onSelectRoute(line.lineName);
+                      setState(() {
+                        _showGetLine = false;
+                      });
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2E3E4B),
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: const Color(0xFF3A4F65)),
+                      ),
+                      child: Row(
+                        children: [
+                          // أيقونة الخط
+                          Container(
+                            width: 38,
+                            height: 38,
+                            decoration: BoxDecoration(
+                              color: _getMarkerColor(line.lineName),
+                              shape: BoxShape.circle,
+                            ),
+                            child: Center(child: getIcon(line.lineName)),
+                          ),
+                          const SizedBox(width: 12),
+                          // اسم الخط
+                          Expanded(
+                            child: Text(
+                              line.lineName,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          // النقاط
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 10, vertical: 5),
+                            decoration: BoxDecoration(
+                              color: Colors.blue.shade700,
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              "${line.score.toInt()} نقطة",
+                              style: const TextStyle(
+                                  color: Colors.white, fontSize: 11),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+          ] else ...[
+            // ← إذا لم يتم استدعاء الـ agent بعد
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E3E4B),
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(color: const Color(0xFF3A4F65)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.info_outline, color: Colors.white54, size: 18),
+                  const SizedBox(width: 10),
+                  const Expanded(
+                    child: Text(
+                      'اضغط "اقترح أفضل خط" أولاً للحصول على توصيات',
+                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+
+          // زر Trace Line
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton.icon(
+              onPressed: onTraceLine,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4A9EFF),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(25),
+                ),
+              ),
+              icon: const Icon(Icons.route, color: Colors.white, size: 20),
+              label: const Text(
+                'Trace Line',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 10),
+
+          // زر إغلاق
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text(
+                'إلغاء',
+                style: TextStyle(color: Colors.white54, fontSize: 14),
               ),
             ),
           ),
@@ -2182,18 +2574,28 @@ class HomePageState extends State<HomePage> {
     final selected = index == _selectedTransport;
     return GestureDetector(
       onTap: () => _onTransportSelected(index),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 10),
-        width: 44,
-        height: 44,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        width: 46,
+        height: 46,
         decoration: BoxDecoration(
-          color: selected ? Colors.white.withOpacity(0.88) : const Color(0xFF2E3E4B),
+          color: selected ? Colors.white : const Color(0xFF1E2A3A),
           shape: BoxShape.circle,
-          border: selected ? Border.all(color: const Color(0xFF2E3E4B), width: 2) : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.3),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Center(
-          child: FaIcon(_transportIcons[index],
-              color: selected ? const Color(0xFF2E3E4B) : Colors.white, size: 20),
+          child: FaIcon(
+            _transportIcons[index],
+            color: selected ? const Color(0xFF1E2A3A) : Colors.white,
+            size: 20,
+          ),
         ),
       ),
     );
@@ -2464,4 +2866,4 @@ class _OriginalBottomSheetState extends State<_OriginalBottomSheet> {
 
   Widget _iconBtn(IconData icon, Color color, VoidCallback onTap) =>
       IconButton(icon: Icon(icon, color: color, size: 24), onPressed: onTap);
-}
+  }

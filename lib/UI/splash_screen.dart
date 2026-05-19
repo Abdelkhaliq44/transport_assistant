@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'about.dart';
+
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -106,8 +108,14 @@ class _SplashScreenState extends State<SplashScreen>
     Future.delayed(const Duration(milliseconds: 3600), () {
       if (mounted) {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-        // Navigator.pushReplacement(context,
-        //   MaterialPageRoute(builder: (_) => const MapScreen()));
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OnboardingScreen(
+
+            ),
+          ),
+        );
       }
     });
   }

@@ -59,19 +59,6 @@ class _SignInState extends State<SignIn> {
             children: [
             // ── Background ──
             _MapBackground(),
-
-        // ── Close button (من الكود القديم) ──
-        Positioned(
-          top: 40,
-          right: 20,
-          child: SafeArea(
-            child: IconButton(
-              onPressed: () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.clear, color: Color(0xFF1C2B4A)),
-            ),
-          ),
-        ),
-
         // ── Content ──
         SafeArea(
             child: Center(

@@ -12,52 +12,106 @@ class PathLinesScreen extends StatefulWidget {
   const PathLinesScreen({super.key, this.onSelectRoute});
 
   @override
-  State<PathLinesScreen> createState() => _PathLinesScreenState();
+  State<PathLinesScreen> createState() => PathLinesScreenState();
 }
 
-class _PathLinesScreenState extends State<PathLinesScreen> {
-
+class PathLinesScreenState extends State<PathLinesScreen> {
   final List<_PathItem> _items = [];
+  Widget? _currentPage;
+
+  // ← دالة الـ reset
+  void resetPage() {
+    setState(() => _currentPage = null);
+  }
 
   @override
   void initState() {
     super.initState();
     _items.addAll([
-      _PathItem(label: 'Taxi Line',      icon: FontAwesomeIcons.taxi,        page: const TaxiLinesScreen()),
-      _PathItem(label: 'Bus Line',       icon: FontAwesomeIcons.bus,         page: BusLinesScreen(onSelectRoute: widget.onSelectRoute)),
-      _PathItem(label: 'Train Line',     icon: FontAwesomeIcons.train,       page: TrainLinesScreen(widget.onSelectRoute)),
-      _PathItem(label: 'Tram Line',      icon: FontAwesomeIcons.trainTram,   page: const TramLinesScreen()),
-      _PathItem(label: 'Metro Line',     icon: FontAwesomeIcons.trainSubway, page: const MitroLinesScreen()),
-      _PathItem(label: 'Telefirik Line', icon: FontAwesomeIcons.cableCar,    page: const TeleferikLinesScreen()),
+      _PathItem(
+        label: 'Taxi Line',
+        icon: FontAwesomeIcons.taxi,
+        page: TaxiLinesScreen(
+          onSelectRoute: (lineName) {
+            setState(() => _currentPage = null);
+            widget.onSelectRoute?.call(lineName);
+          },
+        ),
+      ),
+      _PathItem(
+        label: 'Bus Line',
+        icon: FontAwesomeIcons.bus,
+        page: BusLinesScreen(
+          onSelectRoute: (lineName) {
+            setState(() => _currentPage = null);
+            widget.onSelectRoute?.call(lineName);
+          },
+        ),
+      ),
+      _PathItem(
+        label: 'Train Line',
+        icon: FontAwesomeIcons.train,
+        page: TrainLinesScreen(
+              (lineName) {
+            setState(() => _currentPage = null);
+            widget.onSelectRoute?.call(lineName);
+          },
+        ),
+      ),
+      _PathItem(
+        label: 'Tram Line',
+        icon: FontAwesomeIcons.trainTram,
+        page: TramLinesScreen(
+          onSelectRoute: (lineName) {
+            setState(() => _currentPage = null);
+            widget.onSelectRoute?.call(lineName);
+          },
+        ),
+      ),
+      _PathItem(
+        label: 'Metro Line',
+        icon: FontAwesomeIcons.trainSubway,
+        page: MitroLinesScreen(
+          onSelectRoute: (lineName) {
+            setState(() => _currentPage = null);
+            widget.onSelectRoute?.call(lineName);
+          },
+        ),
+      ),
+      _PathItem(
+        label: 'Telefirik Line',
+        icon: FontAwesomeIcons.cableCar,
+        page: TeleferikLinesScreen(
+          onSelectRoute: (lineName) {
+            setState(() => _currentPage = null);
+            widget.onSelectRoute?.call(lineName);
+          },
+        ),
+      ),
     ]);
   }
 
   @override
   Widget build(BuildContext context) {
+    // ← اعرض صفحة الخط إذا تم اختيارها
+    if (_currentPage != null) return _currentPage!;
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // ── Background Image ──
           SizedBox.expand(
             child: Image.asset(
               'assets/images/background_pathline.jpg',
               fit: BoxFit.cover,
             ),
           ),
-
-          // ── Dark Overlay ──
-          Container(
-            color: Colors.black.withOpacity(0.4),
-          ),
-
-          // ── Content ──
+          Container(color: Colors.black.withOpacity(0.4)),
           SafeArea(
             child: Column(
               children: [
                 _buildTopBar(),
                 const SizedBox(height: 20),
-
                 const Text(
                   'Path Lines',
                   style: TextStyle(
@@ -67,7 +121,6 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
                   ),
                 ),
                 const SizedBox(height: 24),
-
                 Expanded(
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -75,9 +128,7 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      children: _items
-                          .map((item) => _buildCard(item))
-                          .toList(),
+                      children: _items.map((item) => _buildCard(item)).toList(),
                     ),
                   ),
                 ),
@@ -89,9 +140,6 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────
-  // Top Bar
-  // ─────────────────────────────────────────────
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
@@ -118,8 +166,7 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
                         hintText: 'Choose your destination',
-                        hintStyle: TextStyle(
-                            color: Colors.white, fontSize: 13),
+                        hintStyle: TextStyle(color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -128,8 +175,7 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 12),
-                    child: Icon(Icons.search,
-                        color: Colors.grey.shade400, size: 20),
+                    child: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
                   ),
                 ],
               ),
@@ -140,18 +186,10 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
     );
   }
 
-  // ─────────────────────────────────────────────
-  // Path Card
-  // ─────────────────────────────────────────────
   Widget _buildCard(_PathItem item) {
     return GestureDetector(
-      onTap: () async {
-        await Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => item.page),
-        );
-        // ← بعد الرجوع من BusLinesScreen تلقائياً يرجع هنا
-        // لا تحتاج شيئاً إضافياً — الـ callback في MainScreen يتولى الباقي
+      onTap: () {
+        setState(() => _currentPage = item.page);
       },
       child: Container(
         decoration: BoxDecoration(
@@ -162,7 +200,6 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            // Icon circle
             Container(
               width: 56,
               height: 56,
@@ -171,16 +208,10 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
                 shape: BoxShape.circle,
               ),
               child: Center(
-                child:FaIcon(
-                  item.icon,
-                  color: Colors.white,
-                  size: 26,
-                )
+                child: FaIcon(item.icon, color: Colors.white, size: 26),
               ),
             ),
             const SizedBox(height: 12),
-
-            // Label
             Text(
               item.label,
               style: const TextStyle(
@@ -196,18 +227,14 @@ class _PathLinesScreenState extends State<PathLinesScreen> {
   }
 }
 
-// ─────────────────────────────────────────────
-// Data Models
-// ─────────────────────────────────────────────
 class _PathItem {
   final String label;
   final FaIconData icon;
-  final Widget page;  // ← أضف هذا
+  final Widget page;
 
   _PathItem({
     required this.label,
     required this.icon,
     required this.page,
   });
-
 }

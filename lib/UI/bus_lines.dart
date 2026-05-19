@@ -181,7 +181,7 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
           }
         });
         widget.onSelectRoute?.call(_items[index].title.trim());
-        Navigator.pop(context);
+
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -254,7 +254,7 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
                     }
                   });
                   widget.onSelectRoute?.call(_items[index].title.trim());
-                  Navigator.pop(context);
+
                 },
                 child: Icon(
                   item.isFav ? Icons.favorite : Icons.favorite_border,

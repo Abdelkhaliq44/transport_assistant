@@ -21,6 +21,7 @@ class _MainScreenState extends State<MainScreen> {
   int _selectedIndex = 1;
 
   final GlobalKey<HomePageState> _homeKey = GlobalKey<HomePageState>();
+  final GlobalKey<PathLinesScreenState> _pathKey = GlobalKey<PathLinesScreenState>();
 
   late final List<Widget> _pages;
 
@@ -29,10 +30,11 @@ class _MainScreenState extends State<MainScreen> {
     super.initState();
     _pages = [
       PathLinesScreen(
+        key: _pathKey,
         onSelectRoute: (lineName) async {
-          // ← الـ callback يُنفَّذ أولاً قبل الـ pop
+          setState(() => _selectedIndex = 1);
+          await Future.delayed(const Duration(milliseconds: 50));
           await _homeKey.currentState?.onSelectRoute(lineName);
-          setState(() => _selectedIndex = 1); // ← ينتقل لـ HomePage
         },
       ),
       HomePage(key: _homeKey),
@@ -56,9 +58,9 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildBottomNav() {
     final items = [
-      _NavItem(icon: Icons.map_outlined,        label: 'Path'),
-      _NavItem(icon: Icons.location_on_outlined, label: 'Map'),
-      _NavItem(icon: Icons.person_outline,       label: 'Profile'),
+      _NavItem(icon: Icons.map_outlined,         label: 'Path'),
+      _NavItem(icon: Icons.location_on_outlined,  label: 'Map'),
+      _NavItem(icon: Icons.person_outline,        label: 'Profile'),
     ];
 
     return Container(
@@ -81,7 +83,13 @@ class _MainScreenState extends State<MainScreen> {
         children: List.generate(items.length, (i) {
           final selected = i == _selectedIndex;
           return GestureDetector(
-            onTap: () => setState(() => _selectedIndex = i),
+            onTap: () {
+              // ← عند الضغط على Path أعد الصفحة لحالتها الأصلية
+              if (i == 0) {
+                _pathKey.currentState?.resetPage();
+              }
+              setState(() => _selectedIndex = i);
+            },
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [

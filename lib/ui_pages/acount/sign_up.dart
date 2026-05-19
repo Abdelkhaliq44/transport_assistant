@@ -243,18 +243,6 @@ class _SignUpState extends State<SignUp> {
               ),
             ),
           ),
-
-          // Close button
-          Positioned(
-            top: 20,
-            right: 20,
-            child: IconButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              icon: const Icon(Icons.clear, color: Color(0xFF1C2B4A)),
-            ),
-          ),
         ],
       ),
     );
