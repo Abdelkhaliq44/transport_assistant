@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class TeleferikLinesScreen extends StatefulWidget {
-  final Function(String)? onSelectRoute; // ← أضف
-  const TeleferikLinesScreen({super.key, this.onSelectRoute}); // ← عدّل
+  final Function(String)? onSelectRoute;
+  const TeleferikLinesScreen({super.key, this.onSelectRoute});
 
   @override
   State<TeleferikLinesScreen> createState() => _TeleferikLinesScreenState();
@@ -12,8 +13,9 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
   final List<_FavoriteItem> _items = List.generate(
     1,
         (i) => _FavoriteItem(
-      title: 'teleferik',
-      address: 'Jardin d essai,Monument aux Martyrs',
+      titleKey: 'teleferik.name',
+      routeKey: 'teleferik',
+      addressKey: 'teleferik.address',
       isFav: true,
       isSelected: i == 3,
     ),
@@ -37,9 +39,9 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
               children: [
                 _buildTopBar(),
                 const SizedBox(height: 20),
-                const Text(
-                  'Teleferik Line',
-                  style: TextStyle(
+                Text(
+                  'teleferik.title'.tr(),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -93,8 +95,8 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
                     child: TextField(
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Choose your destination',
-                        hintStyle: TextStyle(color: Colors.white, fontSize: 13),
+                        hintText: 'taxi.search_hint'.tr(),
+                        hintStyle: const TextStyle(color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -120,16 +122,15 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
         setState(() {
           for (int i = 0; i < _items.length; i++) {
             _items[i] = _FavoriteItem(
-              title: _items[i].title,
-              address: _items[i].address,
+              titleKey: _items[i].titleKey,
+              routeKey: _items[i].routeKey,
+              addressKey: _items[i].addressKey,
               isFav: _items[i].isFav,
               isSelected: i == index,
             );
           }
         });
-        // ← استدعي الـ callback ثم ارجع
-        widget.onSelectRoute?.call(_items[index].title.trim());
-
+        widget.onSelectRoute?.call(_items[index].routeKey);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -146,8 +147,8 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 20),
+            const Padding(
+              padding: EdgeInsets.only(top: 20),
               child: Icon(Icons.location_on, color: Color(0xFF2E3E4B), size: 25),
             ),
             const SizedBox(width: 10),
@@ -156,7 +157,7 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    item.titleKey.tr(),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -165,7 +166,7 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item.address,
+                    item.addressKey.tr(),
                     style: const TextStyle(fontSize: 11, color: Colors.white),
                   ),
                 ],
@@ -177,8 +178,9 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
                 onTap: () {
                   setState(() {
                     _items[index] = _FavoriteItem(
-                      title: item.title,
-                      address: item.address,
+                      titleKey: item.titleKey,
+                      routeKey: item.routeKey,
+                      addressKey: item.addressKey,
                       isFav: !item.isFav,
                       isSelected: item.isSelected,
                     );
@@ -199,14 +201,16 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
 }
 
 class _FavoriteItem {
-  final String title;
-  final String address;
+  final String titleKey;
+  final String routeKey;
+  final String addressKey;
   final bool isFav;
   final bool isSelected;
 
   _FavoriteItem({
-    required this.title,
-    required this.address,
+    required this.titleKey,
+    required this.routeKey,
+    required this.addressKey,
     required this.isFav,
     required this.isSelected,
   });

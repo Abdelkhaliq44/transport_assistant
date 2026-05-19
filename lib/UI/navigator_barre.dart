@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:transport_assistant/ui_pages/home_page.dart';
 import 'package:transport_assistant/UI/page_profile.dart';
 import 'package:transport_assistant/UI/pathline.dart';
@@ -58,9 +59,9 @@ class _MainScreenState extends State<MainScreen> {
 
   Widget _buildBottomNav() {
     final items = [
-      _NavItem(icon: Icons.map_outlined,         label: 'Path'),
-      _NavItem(icon: Icons.location_on_outlined,  label: 'Map'),
-      _NavItem(icon: Icons.person_outline,        label: 'Profile'),
+      _NavItem(icon: Icons.map_outlined,        label: 'path'.tr()),
+      _NavItem(icon: Icons.location_on_outlined, label: 'map'.tr()),
+      _NavItem(icon: Icons.person_outline,       label: 'profile'.tr()),
     ];
 
     return Container(
@@ -84,7 +85,6 @@ class _MainScreenState extends State<MainScreen> {
           final selected = i == _selectedIndex;
           return GestureDetector(
             onTap: () {
-              // ← عند الضغط على Path أعد الصفحة لحالتها الأصلية
               if (i == 0) {
                 _pathKey.currentState?.resetPage();
               }

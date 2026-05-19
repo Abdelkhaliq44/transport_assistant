@@ -16,7 +16,7 @@ class SignIn extends StatefulWidget {
 }
 
 class _SignInState extends State<SignIn> {
-  final _emailController = TextEditingController();
+  final _emailController    = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
 
@@ -27,7 +27,6 @@ class _SignInState extends State<SignIn> {
     super.dispose();
   }
 
-  // ── دالة تسجيل الدخول من الكود القديم ──
   void _handleSignIn() {
     AuthHelper()
         .signIn(
@@ -39,10 +38,12 @@ class _SignInState extends State<SignIn> {
         widget.onGoToHome?.call();
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => MainScreen(
-            isDark: false,
-            onThemeChanged: (val) {},
-          )),
+          MaterialPageRoute(
+            builder: (_) => MainScreen(
+              isDark: false,
+              onThemeChanged: (val) {},
+            ),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context)
@@ -54,180 +55,184 @@ class _SignInState extends State<SignIn> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: Stack(
-            fit: StackFit.expand,
-            children: [
-            // ── Background ──
-            _MapBackground(),
-        // ── Content ──
-        SafeArea(
+      body: Stack(
+        fit: StackFit.expand,
+        children: [
+          // ── Background ──
+          _MapBackground(),
+
+          // ── Content ──
+          SafeArea(
             child: Center(
-                child: SingleChildScrollView(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-                  child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                      // Logo
-                      const _TransWayLogo(),
-                  const SizedBox(height: 20),
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 32, vertical: 24),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Logo
+                    const _TransWayLogo(),
+                    const SizedBox(height: 20),
 
-                  // Title
-                  Text(
-                    'Welcome Back To TransWay',
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF1C2B4A),
-                      letterSpacing: 0.2,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Email field
-                  _buildLabel('Email'.tr()),
-                  const SizedBox(height: 6),
-                  _buildTextField(
-                    controller: _emailController,
-                    hint: 'Enter your email',
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 18),
-
-                  // Password field
-                  _buildLabel('Password'.tr()),
-                  const SizedBox(height: 6),
-                  _buildPasswordField(),
-                  const SizedBox(height: 28),
-                  // Sign In button — يستدعي دالة Firebase
-                  SizedBox(
-                    width: double.infinity,
-                    height: 52,
-                    child: ElevatedButton(
-                      onPressed: _handleSignIn,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1C2B4A),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(30),
-                        ),
-                      ),
-                      child: Text(
-                        'Sign In'.tr(),
-                        style: const TextStyle(
-                          color: Color(0xFFD7E4F1),
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.3,
-                        ),
+                    // Title
+                    Text(
+                      'welcome_back'.tr(),
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1C2B4A),
+                        letterSpacing: 0.2,
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
+                    const SizedBox(height: 32),
 
-                  // Don't have an account?
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Don't have an account? ",
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF1C2B4A),
-                        ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (_) => const SignUp()),
-                          );
-                        },
-                        style: TextButton.styleFrom(
-                          padding: EdgeInsets.zero,
-                          minimumSize: const Size(0, 0),
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    // Email field
+                    _buildLabel('Email'.tr()),
+                    const SizedBox(height: 6),
+                    _buildTextField(
+                      controller: _emailController,
+                      hint: 'email_hint'.tr(),
+                      keyboardType: TextInputType.emailAddress,
+                    ),
+                    const SizedBox(height: 18),
+
+                    // Password field
+                    _buildLabel('Password'.tr()),
+                    const SizedBox(height: 6),
+                    _buildPasswordField(),
+                    const SizedBox(height: 28),
+
+                    // Sign In button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: _handleSignIn,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1C2B4A),
+                          foregroundColor: Colors.white,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
                         ),
                         child: Text(
-                          'Sign Up'.tr(),
+                          'Sign in'.tr(),
                           style: const TextStyle(
-                            fontSize: 13,
-                            color: Color(0xFF1C2B4A),
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
+                            color: Color(0xFFD7E4F1),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 0.3,
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
+                    ),
+                    const SizedBox(height: 14),
 
-                  // OR divider
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Divider(
-                            color: Color(0xFF2E3E4B), thickness: 0.8),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          'or',
+                    // Don't have an account?
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'no_account'.tr(),
                           style: const TextStyle(
-                              fontSize: 13, color: Color(0xFF2E3E4B)),
+                            fontSize: 13,
+                            color: Color(0xFF1C2B4A),
+                          ),
                         ),
-                      ),
-                      const Expanded(
-                        child: Divider(
-                            color: Color(0xFF2E3E4B), thickness: 0.8),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                        // Sign In with Google
-                        SizedBox(
-                          width: double.infinity,
-                          height: 52,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // يمكن إضافة Google Sign-In لاحقاً
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFFA5B9CC),
-                              foregroundColor: const Color(0xFFA5B9CC),
-                              elevation: 1,
-                              shadowColor: Colors.black26,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                _GoogleIcon(),
-                                const SizedBox(width: 10),
-                                const Text(
-                                  'Sign In with Google',
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    color: Color(0xFF374151),
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                ),
-                              ],
+                        TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (_) => const SignUp()),
+                            );
+                          },
+                          style: TextButton.styleFrom(
+                            padding: EdgeInsets.zero,
+                            minimumSize: const Size(0, 0),
+                            tapTargetSize:
+                            MaterialTapTargetSize.shrinkWrap,
+                          ),
+                          child: Text(
+                            'SignUp'.tr(),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF1C2B4A),
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
                         ),
                       ],
-                  ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // OR divider
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Divider(
+                              color: Color(0xFF2E3E4B), thickness: 0.8),
+                        ),
+                        Padding(
+                          padding:
+                          const EdgeInsets.symmetric(horizontal: 10),
+                          child: Text(
+                            'or'.tr(),
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF2E3E4B)),
+                          ),
+                        ),
+                        const Expanded(
+                          child: Divider(
+                              color: Color(0xFF2E3E4B), thickness: 0.8),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Sign In with Google
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton(
+                        onPressed: () {},
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFFA5B9CC),
+                          foregroundColor: const Color(0xFFA5B9CC),
+                          elevation: 1,
+                          shadowColor: Colors.black26,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(30),
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _GoogleIcon(),
+                            const SizedBox(width: 10),
+                            Text(
+                              'Connect with Google'.tr(),
+                              style: const TextStyle(
+                                fontSize: 15,
+                                color: Color(0xFF374151),
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+              ),
             ),
-        ),
-            ],
-        ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -256,33 +261,33 @@ class _SignInState extends State<SignIn> {
       style: const TextStyle(fontSize: 14, color: Color(0xFF374151)),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle:
-        const TextStyle(color: Colors.white60, fontSize: 14),
+        hintStyle: const TextStyle(color: Colors.white60, fontSize: 14),
         filled: true,
         fillColor: Colors.white.withOpacity(0.35),
         contentPadding:
         const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide: BorderSide(color: Colors.grey.shade300, width: 1),
+          borderSide:
+          BorderSide(color: Colors.grey.shade300, width: 1),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide:
-          const BorderSide(color: Color(0xFF1C2B4A), width: 1.5),
+          borderSide: const BorderSide(
+              color: Color(0xFF1C2B4A), width: 1.5),
         ),
       ),
     );
   }
+
   Widget _buildPasswordField() {
     return TextField(
       controller: _passwordController,
       obscureText: _obscurePassword,
       style: const TextStyle(fontSize: 14, color: Color(0xFF374151)),
       decoration: InputDecoration(
-        hintText: 'Enter your password',
-        hintStyle:
-        const TextStyle(color: Colors.white60, fontSize: 14),
+        hintText: 'password_hint'.tr(),
+        hintStyle: const TextStyle(color: Colors.white60, fontSize: 14),
         filled: true,
         fillColor: Colors.white.withOpacity(0.35),
         contentPadding:
@@ -294,8 +299,8 @@ class _SignInState extends State<SignIn> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(30),
-          borderSide:
-          const BorderSide(color: Color(0xFF1C2B4A), width: 1.5),
+          borderSide: const BorderSide(
+              color: Color(0xFF1C2B4A), width: 1.5),
         ),
         suffixIcon: IconButton(
           icon: Icon(
@@ -305,11 +310,8 @@ class _SignInState extends State<SignIn> {
             color: Colors.grey.shade400,
             size: 20,
           ),
-          onPressed: () {
-            setState(() {
-              _obscurePassword = !_obscurePassword;
-            });
-          },
+          onPressed: () =>
+              setState(() => _obscurePassword = !_obscurePassword),
         ),
       ),
     );
@@ -365,7 +367,6 @@ class _GoogleIconPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final center = Offset(size.width / 2, size.height / 2);
-
     final textPainter = TextPainter(
       text: const TextSpan(
         text: 'G',
@@ -377,7 +378,6 @@ class _GoogleIconPainter extends CustomPainter {
         ),
       ),
       textDirection: ui.TextDirection.ltr,
-
     );
     textPainter.layout();
     textPainter.paint(

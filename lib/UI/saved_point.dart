@@ -1,13 +1,13 @@
 import 'package:flutter/material.dart';
 
-class SavedPoints extends StatefulWidget {
-  const SavedPoints({super.key});
+class SavedPointsScreen extends StatefulWidget {
+  const SavedPointsScreen({super.key});
 
   @override
-  State<SavedPoints> createState() => _SavedPointsState();
+  State<SavedPointsScreen> createState() => _SavedPointsScreenState();
 }
 
-class _SavedPointsState extends State<SavedPoints> {
+class _SavedPointsScreenState extends State<SavedPointsScreen> {
   int _selectedNavIndex = 1; // Favorites is selected
 
   // Favorite items list — index 3 is selected/highlighted

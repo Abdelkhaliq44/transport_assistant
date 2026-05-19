@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:transport_assistant/UI/Taxi_lines.dart';
@@ -19,7 +20,6 @@ class PathLinesScreenState extends State<PathLinesScreen> {
   final List<_PathItem> _items = [];
   Widget? _currentPage;
 
-  // ← دالة الـ reset
   void resetPage() {
     setState(() => _currentPage = null);
   }
@@ -29,7 +29,7 @@ class PathLinesScreenState extends State<PathLinesScreen> {
     super.initState();
     _items.addAll([
       _PathItem(
-        label: 'Taxi Line',
+        labelKey: 'taxi_line',
         icon: FontAwesomeIcons.taxi,
         page: TaxiLinesScreen(
           onSelectRoute: (lineName) {
@@ -39,7 +39,7 @@ class PathLinesScreenState extends State<PathLinesScreen> {
         ),
       ),
       _PathItem(
-        label: 'Bus Line',
+        labelKey: 'bus_line',
         icon: FontAwesomeIcons.bus,
         page: BusLinesScreen(
           onSelectRoute: (lineName) {
@@ -49,7 +49,7 @@ class PathLinesScreenState extends State<PathLinesScreen> {
         ),
       ),
       _PathItem(
-        label: 'Train Line',
+        labelKey: 'train_line',
         icon: FontAwesomeIcons.train,
         page: TrainLinesScreen(
               (lineName) {
@@ -59,7 +59,7 @@ class PathLinesScreenState extends State<PathLinesScreen> {
         ),
       ),
       _PathItem(
-        label: 'Tram Line',
+        labelKey: 'tram_line',
         icon: FontAwesomeIcons.trainTram,
         page: TramLinesScreen(
           onSelectRoute: (lineName) {
@@ -69,7 +69,7 @@ class PathLinesScreenState extends State<PathLinesScreen> {
         ),
       ),
       _PathItem(
-        label: 'Metro Line',
+        labelKey: 'metro_line',
         icon: FontAwesomeIcons.trainSubway,
         page: MitroLinesScreen(
           onSelectRoute: (lineName) {
@@ -79,7 +79,7 @@ class PathLinesScreenState extends State<PathLinesScreen> {
         ),
       ),
       _PathItem(
-        label: 'Telefirik Line',
+        labelKey: 'telefirik_line',
         icon: FontAwesomeIcons.cableCar,
         page: TeleferikLinesScreen(
           onSelectRoute: (lineName) {
@@ -93,7 +93,6 @@ class PathLinesScreenState extends State<PathLinesScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // ← اعرض صفحة الخط إذا تم اختيارها
     if (_currentPage != null) return _currentPage!;
 
     return Scaffold(
@@ -112,9 +111,9 @@ class PathLinesScreenState extends State<PathLinesScreen> {
               children: [
                 _buildTopBar(),
                 const SizedBox(height: 20),
-                const Text(
-                  'Path Lines',
-                  style: TextStyle(
+                Text(
+                  'path_lines'.tr(),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -128,7 +127,8 @@ class PathLinesScreenState extends State<PathLinesScreen> {
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      children: _items.map((item) => _buildCard(item)).toList(),
+                      children:
+                      _items.map((item) => _buildCard(item)).toList(),
                     ),
                   ),
                 ),
@@ -163,10 +163,12 @@ class PathLinesScreenState extends State<PathLinesScreen> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: TextField(
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style:
+                      const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Choose your destination',
-                        hintStyle: TextStyle(color: Colors.white, fontSize: 13),
+                        hintText: 'choose_destination'.tr(),
+                        hintStyle: const TextStyle(
+                            color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -175,7 +177,8 @@ class PathLinesScreenState extends State<PathLinesScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 12),
-                    child: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+                    child: Icon(Icons.search,
+                        color: Colors.grey.shade400, size: 20),
                   ),
                 ],
               ),
@@ -213,7 +216,7 @@ class PathLinesScreenState extends State<PathLinesScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              item.label,
+              item.labelKey.tr(),
               style: const TextStyle(
                 fontSize: 15,
                 fontWeight: FontWeight.w600,
@@ -228,12 +231,12 @@ class PathLinesScreenState extends State<PathLinesScreen> {
 }
 
 class _PathItem {
-  final String label;
+  final String labelKey;
   final FaIconData icon;
   final Widget page;
 
   _PathItem({
-    required this.label,
+    required this.labelKey,
     required this.icon,
     required this.page,
   });

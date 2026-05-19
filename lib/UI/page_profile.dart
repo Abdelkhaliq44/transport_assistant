@@ -26,18 +26,15 @@ class ProfileScreen extends StatefulWidget {
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  // ── Preferences ──────────────────────────────────────────────────────────
   bool _notificationsEnabled = true;
   late bool _darkModeEnabled;
 
-  // ── Auth / User data ──────────────────────────────────────────────────────
   String? _imgPath;
   User?   _user;
   String? _email;
   String? _name;
   bool    _isLoggedIn = false;
 
-  // ─────────────────────────────────────────────────────────────────────────
   @override
   void initState() {
     super.initState();
@@ -95,24 +92,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // ── BACKGROUND IMAGE ──────────────────────────────────────────────
           SizedBox.expand(
             child: Image.asset(
               'assets/images/photo_2026-05-02_15-51-19.jpg',
               fit: BoxFit.cover,
             ),
           ),
-
-          // ── DARK OVERLAY ─────────────────────────────────────────────────
           Container(color: Colors.black.withOpacity(0.25)),
-
-          // ── AVATAR ───────────────────────────────────────────────────────
           Positioned(
             right: 147,
             top: 90,
@@ -127,8 +119,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   : null,
             ),
           ),
-
-          // ── ADD / EDIT PHOTO BUTTON ───────────────────────────────────────
           Positioned(
             right: 155,
             top: 190,
@@ -140,15 +130,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: Icon(
                   Icons.add,
                   size: 18,
-                  color: _isLoggedIn
-                      ? const Color(0xFF1F2E3B)
-                      : Colors.grey,
+                  color: _isLoggedIn ? const Color(0xFF1F2E3B) : Colors.grey,
                 ),
               ),
             ),
           ),
-
-          // ── MAIN CONTENT ─────────────────────────────────────────────────
           Padding(
             padding: const EdgeInsets.only(top: 190.0),
             child: Column(
@@ -157,7 +143,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   children: [
                     const SizedBox(height: 60),
                     Text(
-                      _isLoggedIn ? (_name ?? 'No Name') : 'Guest',
+                      _isLoggedIn ? (_name ?? 'no_name'.tr()) : 'guest'.tr(),
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -165,16 +151,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                     ),
                     Text(
-                      _isLoggedIn ? (_email ?? '') : 'Not signed in',
+                      _isLoggedIn ? (_email ?? '') : 'not_signed_in'.tr(),
                       style: const TextStyle(color: Colors.white70),
                     ),
                   ],
                 ),
-
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 24, vertical: 8),
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
                     child: _isLoggedIn
                         ? _buildLoggedInContent()
                         : _buildLoggedOutContent(),
@@ -188,111 +172,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
   // واجهة المستخدم المسجّل
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
   Widget _buildLoggedInContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-
-        _sectionTitle('About'),
+        _sectionTitle('about'.tr()),
         const SizedBox(height: 10),
 
-        _buildFieldLabel('Email'),
+        _buildFieldLabel('Email'.tr()),
         const SizedBox(height: 4),
-        _buildInfoTile(
-          icon: Icons.email_outlined,
-          value: _email ?? 'No Email',
-        ),
+        _buildInfoTile(icon: Icons.email_outlined, value: _email ?? 'no_email'.tr()),
 
         const SizedBox(height: 12),
-
-        _buildFieldLabel('Name'),
+        _buildFieldLabel('Username'.tr()),
         const SizedBox(height: 4),
-        _buildInfoTile(
-          icon: Icons.person_outline,
-          value: _name ?? 'No Name',
-        ),
+        _buildInfoTile(icon: Icons.person_outline, value: _name ?? 'no_name'.tr()),
 
         const SizedBox(height: 24),
-
-        _sectionTitle('Preferences'),
+        _sectionTitle('settings'.tr()),
         const SizedBox(height: 10),
 
-        // ── اللغة ──────────────────────────────────────────────────────────
         _buildPreferenceTile(
           icon: Icons.language,
-          label: 'Languages',
-          trailing: DropdownButton<String>(
-            value: context.locale.languageCode,
-            underline: const SizedBox(),
-            dropdownColor: const Color(0xFF263245),
-            items: [
-              DropdownMenuItem(
-                value: 'en',
-                child: Text('🇬🇧 English',
-                    style: TextStyle(color: Colors.grey.shade300)),
-              ),
-              DropdownMenuItem(
-                value: 'ar',
-                child: Text('🇸🇦 العربية',
-                    style: TextStyle(color: Colors.grey.shade300)),
-              ),
-              DropdownMenuItem(
-                value: 'fr',
-                child: Text('🇫🇷 Français',
-                    style: TextStyle(color: Colors.grey.shade300)),
-              ),
-            ],
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                EasyLocalization.of(context)!.setLocale(Locale(newValue));
-                setState(() {});
-              }
-            },
-          ),
+          label: 'language'.tr(),
+          trailing: _buildLanguageDropdown(),
         ),
-
         const SizedBox(height: 4),
 
-        // ── الإشعارات ──────────────────────────────────────────────────────
         _buildPreferenceTile(
           icon: Icons.notifications_outlined,
-          label: 'Notifications',
+          label: 'notifications'.tr(),
           trailing: Switch(
             value: _notificationsEnabled,
             onChanged: (v) => setState(() => _notificationsEnabled = v),
-            activeColor:      const Color(0xFF1F2E3B),
-            activeTrackColor: const Color(0xFFBECFDF),
+            activeColor:        const Color(0xFF1F2E3B),
+            activeTrackColor:   const Color(0xFFBECFDF),
             inactiveThumbColor: Colors.grey,
             inactiveTrackColor: Colors.grey.shade300,
           ),
         ),
-
         const SizedBox(height: 4),
 
-        // ── الوضع الداكن ───────────────────────────────────────────────────
         _buildPreferenceTile(
           icon: Icons.dark_mode_outlined,
-          label: 'Dark Mode',
+          label: 'dark_light_mode'.tr(),
           trailing: Switch(
             value: _darkModeEnabled,
             onChanged: (v) {
               setState(() => _darkModeEnabled = v);
               widget.onThemeChanged?.call(v);
             },
-            activeColor:      const Color(0xFF1F2E3B),
-            activeTrackColor: const Color(0xFFBECFDF),
+            activeColor:        const Color(0xFF1F2E3B),
+            activeTrackColor:   const Color(0xFFBECFDF),
             inactiveThumbColor: Colors.grey,
             inactiveTrackColor: Colors.grey.shade300,
           ),
         ),
-
         const SizedBox(height: 16),
 
-        // ── Logout Button ──────────────────────────────────────────────────
         SizedBox(
           width: double.infinity,
           height: 52,
@@ -300,108 +241,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
             onPressed: _signOut,
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFBECFDF),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             ),
-            child: const Text(
-              'Logout',
-              style: TextStyle(
-                color: Color(0xFF1F2E3B),
-                fontWeight: FontWeight.bold,
-              ),
+            child: Text(
+              'logout'.tr(),
+              style: const TextStyle(color: Color(0xFF1F2E3B), fontWeight: FontWeight.bold),
             ),
           ),
         ),
-
         const SizedBox(height: 24),
       ],
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // واجهة الزائر (غير مسجّل)
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
+  // واجهة الزائر
+  // ═══════════════════════════════════════════════════════════════════════
   Widget _buildLoggedOutContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 8),
-
-        _sectionTitle('Preferences'),
+        _sectionTitle('settings'.tr()),
         const SizedBox(height: 10),
 
-        // ── اللغة ──────────────────────────────────────────────────────────
         _buildPreferenceTile(
           icon: Icons.language,
-          label: 'Languages',
-          trailing: DropdownButton<String>(
-            value: context.locale.languageCode,
-            underline: const SizedBox(),
-            dropdownColor: const Color(0xFF263245),
-            items: [
-              DropdownMenuItem(
-                value: 'en',
-                child: Text('🇬🇧 English',
-                    style: TextStyle(color: Colors.grey.shade300)),
-              ),
-              DropdownMenuItem(
-                value: 'ar',
-                child: Text('🇸🇦 العربية',
-                    style: TextStyle(color: Colors.grey.shade300)),
-              ),
-              DropdownMenuItem(
-                value: 'fr',
-                child: Text('🇫🇷 Français',
-                    style: TextStyle(color: Colors.grey.shade300)),
-              ),
-            ],
-            onChanged: (String? newValue) {
-              if (newValue != null) {
-                EasyLocalization.of(context)!.setLocale(Locale(newValue));
-                setState(() {});
-              }
-            },
-          ),
+          label: 'language'.tr(),
+          trailing: _buildLanguageDropdown(),
         ),
-
         const SizedBox(height: 4),
 
-        // ── الإشعارات ──────────────────────────────────────────────────────
         _buildPreferenceTile(
           icon: Icons.notifications_outlined,
-          label: 'Notifications',
+          label: 'notifications'.tr(),
           trailing: Switch(
             value: _notificationsEnabled,
             onChanged: (v) => setState(() => _notificationsEnabled = v),
-            activeColor:      const Color(0xFF1F2E3B),
-            activeTrackColor: const Color(0xFFBECFDF),
+            activeColor:        const Color(0xFF1F2E3B),
+            activeTrackColor:   const Color(0xFFBECFDF),
             inactiveThumbColor: Colors.grey,
             inactiveTrackColor: Colors.grey.shade300,
           ),
         ),
-
         const SizedBox(height: 4),
 
-        // ── الوضع الداكن ───────────────────────────────────────────────────
         _buildPreferenceTile(
           icon: Icons.dark_mode_outlined,
-          label: 'Dark Mode',
+          label: 'dark_light_mode'.tr(),
           trailing: Switch(
             value: _darkModeEnabled,
             onChanged: (v) {
               setState(() => _darkModeEnabled = v);
               widget.onThemeChanged?.call(v);
             },
-            activeColor:      const Color(0xFF1F2E3B),
-            activeTrackColor: const Color(0xFFBECFDF),
+            activeColor:        const Color(0xFF1F2E3B),
+            activeTrackColor:   const Color(0xFFBECFDF),
             inactiveThumbColor: Colors.grey,
             inactiveTrackColor: Colors.grey.shade300,
           ),
         ),
-
         const SizedBox(height: 24),
 
-        // ── Sign In Button ─────────────────────────────────────────────────
         SizedBox(
           width: double.infinity,
           height: 52,
@@ -412,12 +313,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFFBECFDF),
-              shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(30)),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
             ),
-            child: const Text(
-              'Sign In',
-              style: TextStyle(
+            child: Text(
+              'Sign in'.tr(),
+              style: const TextStyle(
                 color: Color(0xFF1F2E3B),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
@@ -425,15 +325,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ),
         ),
-
         const SizedBox(height: 24),
       ],
     );
   }
 
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
   // Helper Widgets
-  // ═══════════════════════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════════════════
+  Widget _buildLanguageDropdown() {
+    return DropdownButton<String>(
+      value: context.locale.languageCode,
+      underline: const SizedBox(),
+      dropdownColor: const Color(0xFF263245),
+      items: [
+        DropdownMenuItem(
+          value: 'en',
+          child: Text('🇬🇧 ${'english'.tr()}',
+              style: TextStyle(color: Colors.grey.shade300)),
+        ),
+        DropdownMenuItem(
+          value: 'ar',
+          child: Text('🇸🇦 ${'arabic'.tr()}',
+              style: TextStyle(color: Colors.grey.shade300)),
+        ),
+        DropdownMenuItem(
+          value: 'fr',
+          child: Text('🇫🇷 ${'french'.tr()}',
+              style: TextStyle(color: Colors.grey.shade300)),
+        ),
+      ],
+      onChanged: (String? newValue) {
+        if (newValue != null) {
+          EasyLocalization.of(context)!.setLocale(Locale(newValue));
+          setState(() {});
+        }
+      },
+    );
+  }
+
   Widget _sectionTitle(String title) => Text(
     title,
     style: const TextStyle(
@@ -450,8 +380,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     style: TextStyle(fontSize: 12, color: Colors.grey.shade400),
   );
 
-  Widget _buildInfoTile(
-      {required IconData icon, required String value}) {
+  Widget _buildInfoTile({required IconData icon, required String value}) {
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -465,11 +394,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           Icon(icon, color: Colors.grey.shade400, size: 18),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(value,
-                style: const TextStyle(color: Colors.white)),
+            child: Text(value, style: const TextStyle(color: Colors.white)),
           ),
-          const Text('Edit',
-              style: TextStyle(color: Colors.white)),
+          Text('edit'.tr(), style: const TextStyle(color: Colors.white)),
         ],
       ),
     );
@@ -490,8 +417,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Icon(icon, color: Colors.white),
             const SizedBox(width: 12),
             Expanded(
-              child: Text(label,
-                  style: const TextStyle(color: Colors.white)),
+              child: Text(label, style: const TextStyle(color: Colors.white)),
             ),
             trailing,
           ],

@@ -15,7 +15,8 @@ class Register extends StatefulWidget {
 }
 
 class RegisterState extends State<Register> {
-  int _selectedIndex = -1; // لا يوجد عنصر محدد في البداية
+  int _selectedIndex = -1;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -48,6 +49,7 @@ class RegisterState extends State<Register> {
 
     setState(() {
       pointregistor = loadedLines;
+      _isLoading = false;
     });
   }
 
@@ -57,24 +59,29 @@ class RegisterState extends State<Register> {
     }
   }
 
-  // ── Top Search Bar (من SavedPointsScreen) ──
+  // ── Top Bar ──
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          // Logo
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: Image.asset(
-              'assets/images/ChatGPT_Image_Feb_13__2026__02_39_29_PM-removebg-preview 2.png',
-              fit: BoxFit.contain,
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E3E4B).withOpacity(0.85),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
           const SizedBox(width: 10),
-
-          // Search field
           Expanded(
             child: Container(
               height: 40,
@@ -87,10 +94,12 @@ class RegisterState extends State<Register> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: TextField(
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style:
+                      const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Choose your destination',
-                        hintStyle: TextStyle(color: Colors.white, fontSize: 13),
+                        hintText: 'choose_destination'.tr(),
+                        hintStyle:
+                        const TextStyle(color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -99,7 +108,8 @@ class RegisterState extends State<Register> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 12),
-                    child: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
+                    child: Icon(Icons.search,
+                        color: Colors.grey.shade400, size: 20),
                   ),
                 ],
               ),
@@ -110,7 +120,7 @@ class RegisterState extends State<Register> {
     );
   }
 
-  // ── بطاقة كل عنصر (تصميم SavedPointsScreen + منطق Register) ──
+  // ── History Card ──
   Widget _buildHistoryCard(List<String> line, int index) {
     final name = line[0];
     final isSelected = _selectedIndex == index;
@@ -119,8 +129,10 @@ class RegisterState extends State<Register> {
       onTap: () {
         setState(() => _selectedIndex = index);
 
-        final lat = double.tryParse(line[1].toString().replaceAll(',', '.')) ?? 0.0;
-        final lng = double.tryParse(line[2].toString().replaceAll(',', '.')) ?? 0.0;
+        final lat =
+            double.tryParse(line[1].toString().replaceAll(',', '.')) ?? 0.0;
+        final lng =
+            double.tryParse(line[2].toString().replaceAll(',', '.')) ?? 0.0;
 
         _toMap(lat, lng, name);
         if (Navigator.canPop(context)) Navigator.pop(context);
@@ -131,22 +143,21 @@ class RegisterState extends State<Register> {
           color: const Color(0xFFBECFDF).withOpacity(0.5),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: isSelected ? const Color(0xFF4A9EFF) : const Color(0xFF2E4065),
+            color: isSelected
+                ? const Color(0xFF4A9EFF)
+                : const Color(0xFF2E4065),
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            // أيقونة الموقع
-            Icon(
+            const Icon(
               Icons.location_on,
-              color: const Color(0xFF2E3E4B),
+              color: Color(0xFF2E3E4B),
               size: 25,
             ),
             const SizedBox(width: 10),
-
-            // النص
             Expanded(
               child: Text(
                 name.tr(),
@@ -157,8 +168,6 @@ class RegisterState extends State<Register> {
                 ),
               ),
             ),
-
-            // أيقونة السهم للإشارة إلى الانتقال للخريطة
             const Icon(
               Icons.arrow_forward_ios,
               color: Colors.white70,
@@ -166,6 +175,39 @@ class RegisterState extends State<Register> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  // ── Empty State ──
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.history_rounded,
+            size: 72,
+            color: Colors.white.withOpacity(0.3),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'no_history'.tr(),
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white.withOpacity(0.6),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'no_history_desc'.tr(),
+            style: TextStyle(
+              fontSize: 13,
+              color: Colors.white.withOpacity(0.4),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -184,12 +226,10 @@ class RegisterState extends State<Register> {
             ),
           ),
 
-          // ── طبقة داكنة فوق الخلفية ──
-          Container(
-            color: Colors.black.withOpacity(0.3),
-          ),
+          // ── طبقة داكنة ──
+          Container(color: Colors.black.withOpacity(0.3)),
 
-          // ── المحتوى الرئيسي ──
+          // ── المحتوى ──
           SafeArea(
             child: Column(
               children: [
@@ -207,16 +247,21 @@ class RegisterState extends State<Register> {
                 const SizedBox(height: 20),
 
                 Expanded(
-                  child: pointregistor.isEmpty
+                  child: _isLoading
                       ? const Center(
                     child: CircularProgressIndicator(color: Colors.white),
                   )
+                      : pointregistor.isEmpty
+                      ? _buildEmptyState()
                       : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16),
                     itemCount: pointregistor.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, __) =>
+                    const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      return _buildHistoryCard(pointregistor[index], index);
+                      return _buildHistoryCard(
+                          pointregistor[index], index);
                     },
                   ),
                 ),

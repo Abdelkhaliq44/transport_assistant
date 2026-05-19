@@ -14,7 +14,7 @@ class SignUp extends StatefulWidget {
 
 class _SignUpState extends State<SignUp> {
   bool _isPasswordVisible = false;
-  final TextEditingController _email = TextEditingController();
+  final TextEditingController _email    = TextEditingController();
   final TextEditingController _Password = TextEditingController();
   final TextEditingController _uesrname = TextEditingController();
 
@@ -32,7 +32,7 @@ class _SignUpState extends State<SignUp> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          // Background
+          // ── Background ──
           Image.asset(
             'assets/images/51b7a54fb46ffca4bc9e6e7c5324762cba3f9c83.jpg',
             fit: BoxFit.cover,
@@ -43,7 +43,8 @@ class _SignUpState extends State<SignUp> {
           SafeArea(
             child: Center(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 32, vertical: 24),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -55,10 +56,11 @@ class _SignUpState extends State<SignUp> {
                     ),
                     const SizedBox(height: 16),
 
-                    const Text(
-                      'Welcome To TransWay',
+                    // Title
+                    Text(
+                      'welcome_transway'.tr(),
                       textAlign: TextAlign.center,
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF1C2B4A),
@@ -71,7 +73,7 @@ class _SignUpState extends State<SignUp> {
                     const SizedBox(height: 6),
                     _buildTextField(
                       controller: _email,
-                      hint: 'abdou50@gmail.com',
+                      hint: 'email_hint'.tr(),
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 14),
@@ -81,7 +83,7 @@ class _SignUpState extends State<SignUp> {
                     const SizedBox(height: 6),
                     _buildTextField(
                       controller: _uesrname,
-                      hint: 'abdou59',
+                      hint: 'username_hint'.tr(),
                     ),
                     const SizedBox(height: 14),
 
@@ -90,13 +92,10 @@ class _SignUpState extends State<SignUp> {
                     const SizedBox(height: 6),
                     _buildPasswordField(
                       controller: _Password,
-                      hint: 'Enter your password',
+                      hint: 'password_hint'.tr(),
                       obscure: !_isPasswordVisible,
-                      onToggle: () {
-                        setState(() {
-                          _isPasswordVisible = !_isPasswordVisible;
-                        });
-                      },
+                      onToggle: () => setState(
+                              () => _isPasswordVisible = !_isPasswordVisible),
                     ),
                     const SizedBox(height: 28),
 
@@ -131,11 +130,8 @@ class _SignUpState extends State<SignUp> {
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(30),
                           ),
-
                         ),
-                        child:
-
-                        Text(
+                        child: Text(
                           'SignUp'.tr(),
                           style: const TextStyle(color: Colors.white),
                         ),
@@ -144,33 +140,29 @@ class _SignUpState extends State<SignUp> {
                     const SizedBox(height: 14),
 
                     // Already have account
-                    RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF6B7280),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          'have_account'.tr(),
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF6B7280),
+                          ),
                         ),
-                        children: [
-                          const TextSpan(text: 'Already have an account? '),
-                          WidgetSpan(
-                            alignment: PlaceholderAlignment.middle,
-                            child: GestureDetector(
-                              onTap: () {
-                                Navigator.of(context).pop();
-                              },
-                              child: const Text(
-                                'Sign In',
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  color: Color(0xFF1C2B4A),
-                                  fontWeight: FontWeight.bold,
-                                  decoration: TextDecoration.underline,
-                                ),
-                              ),
+                        GestureDetector(
+                          onTap: () => Navigator.of(context).pop(),
+                          child: Text(
+                            'Sign in'.tr(),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF1C2B4A),
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
                             ),
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
                     const SizedBox(height: 20),
 
@@ -179,25 +171,21 @@ class _SignUpState extends State<SignUp> {
                       children: [
                         const Expanded(
                           child: Divider(
-                            color: Color(0xFF2E3E4B),
-                            thickness: 0.8,
-                          ),
+                              color: Color(0xFF2E3E4B), thickness: 0.8),
                         ),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 10),
+                        Padding(
+                          padding:
+                          const EdgeInsets.symmetric(horizontal: 10),
                           child: Text(
-                            'or',
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF2E3E4B),
-                            ),
+                            'or'.tr(),
+                            style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF2E3E4B)),
                           ),
                         ),
                         const Expanded(
                           child: Divider(
-                            color: Color(0xFF2E3E4B),
-                            thickness: 0.8,
-                          ),
+                              color: Color(0xFF2E3E4B), thickness: 0.8),
                         ),
                       ],
                     ),
@@ -223,12 +211,13 @@ class _SignUpState extends State<SignUp> {
                             SizedBox(
                               width: 22,
                               height: 22,
-                              child: CustomPaint(painter: _GoogleIconPainter()),
+                              child: CustomPaint(
+                                  painter: _GoogleIconPainter()),
                             ),
                             const SizedBox(width: 10),
-                            const Text(
-                              'Sign Up with Google',
-                              style: TextStyle(
+                            Text(
+                              'signup_google'.tr(),
+                              style: const TextStyle(
                                 fontSize: 15,
                                 color: Color(0xFF374151),
                                 fontWeight: FontWeight.w500,
@@ -298,7 +287,8 @@ class _SignUpState extends State<SignUp> {
           borderRadius: BorderRadius.circular(30),
         ),
         suffixIcon: IconButton(
-          icon: Icon(obscure ? Icons.visibility_off : Icons.visibility),
+          icon: Icon(
+              obscure ? Icons.visibility_off : Icons.visibility),
           onPressed: onToggle,
         ),
       ),

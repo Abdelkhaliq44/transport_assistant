@@ -52,10 +52,12 @@ class _fav_pointState extends State<fav_point> {
   }
 
   Future<void> _deletePoint(int index) async {
-    final uid    = FirebaseAuth.instance.currentUser!.uid;
-    final docRef = FirebaseFirestore.instance.collection('Favpoint').doc(uid);
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final docRef =
+    FirebaseFirestore.instance.collection('Favpoint').doc(uid);
     final snapshot = await docRef.get();
-    Map<String, dynamic> data = Map<String, dynamic>.from(snapshot.data() ?? {});
+    Map<String, dynamic> data =
+    Map<String, dynamic>.from(snapshot.data() ?? {});
 
     List<String> sortedKeys = data.keys.toList()
       ..sort((a, b) {
@@ -83,8 +85,11 @@ class _fav_pointState extends State<fav_point> {
 
     setState(() {
       pointFav.removeAt(index);
-      if (_selectedIndex == index) _selectedIndex = -1;
-      else if (_selectedIndex > index) _selectedIndex--;
+      if (_selectedIndex == index) {
+        _selectedIndex = -1;
+      } else if (_selectedIndex > index) {
+        _selectedIndex--;
+      }
     });
   }
 
@@ -99,46 +104,60 @@ class _fav_pointState extends State<fav_point> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C2B3A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'حذف النقطة',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'delete_point_title'.tr(),
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'هل تريد حذف "${pointFav[index][0]}" من المفضلة؟',
+          'delete_point_confirm'
+              .tr(args: [pointFav[index][0], 'favorites_label'.tr()]),
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء', style: TextStyle(color: Colors.white54)),
+            child: Text('cancel'.tr(),
+                style: const TextStyle(color: Colors.white54)),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
               await _deletePoint(index);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تم الحذف من المفضلة')),
+                SnackBar(content: Text('delete_success_fav'.tr())),
               );
             },
-            child: const Text('حذف', style: TextStyle(color: Colors.redAccent)),
+            child: Text('delete'.tr(),
+                style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
     );
   }
 
+  // ── Top Bar ──
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: Image.asset(
-              'assets/images/ChatGPT_Image_Feb_13__2026__02_39_29_PM-removebg-preview 2.png',
-              fit: BoxFit.contain,
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E3E4B).withOpacity(0.85),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -156,9 +175,9 @@ class _fav_pointState extends State<fav_point> {
                     child: TextField(
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Choose your destination',
-                        hintStyle:
-                        TextStyle(color: Colors.white, fontSize: 13),
+                        hintText: 'choose_destination'.tr(),
+                        hintStyle: const TextStyle(
+                            color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -179,8 +198,9 @@ class _fav_pointState extends State<fav_point> {
     );
   }
 
+  // ── Fav Card ──
   Widget _buildFavCard(List<String> line, int index) {
-    final name       = line[0];
+    final name = line[0];
     final isSelected = _selectedIndex == index;
 
     return Dismissible(
@@ -201,23 +221,34 @@ class _fav_pointState extends State<fav_point> {
           context: context,
           builder: (_) => AlertDialog(
             backgroundColor: const Color(0xFF1C2B3A),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text(
-              'حذف النقطة',
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              'delete_point_title'.tr(),
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold),
             ),
             content: Text(
-              'هل تريد حذف "$name" من المفضلة؟',
+              'delete_point_confirm'
+                  .tr(args: [name, 'favorites_label'.tr()]),
               style: const TextStyle(color: Colors.white70),
             ),
             actions: [
               TextButton(
-                onPressed: () { confirmed = false; Navigator.pop(context); },
-                child: const Text('إلغاء', style: TextStyle(color: Colors.white54)),
+                onPressed: () {
+                  confirmed = false;
+                  Navigator.pop(context);
+                },
+                child: Text('cancel'.tr(),
+                    style: const TextStyle(color: Colors.white54)),
               ),
               TextButton(
-                onPressed: () { confirmed = true; Navigator.pop(context); },
-                child: const Text('حذف', style: TextStyle(color: Colors.redAccent)),
+                onPressed: () {
+                  confirmed = true;
+                  Navigator.pop(context);
+                },
+                child: Text('delete'.tr(),
+                    style: const TextStyle(color: Colors.redAccent)),
               ),
             ],
           ),
@@ -227,19 +258,27 @@ class _fav_pointState extends State<fav_point> {
       onDismissed: (_) async {
         await _deletePoint(index);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('تم حذف "$name" من المفضلة')),
+          SnackBar(
+            content: Text('delete_success_named'
+                .tr(args: [name, 'favorites_label'.tr()])),
+          ),
         );
       },
       child: GestureDetector(
         onTap: () {
           setState(() => _selectedIndex = index);
-          final lat = double.tryParse(line[1].toString().replaceAll(',', '.')) ?? 0.0;
-          final lng = double.tryParse(line[2].toString().replaceAll(',', '.')) ?? 0.0;
+          final lat =
+              double.tryParse(line[1].toString().replaceAll(',', '.')) ??
+                  0.0;
+          final lng =
+              double.tryParse(line[2].toString().replaceAll(',', '.')) ??
+                  0.0;
           _toMap(lat, lng, name);
           if (Navigator.canPop(context)) Navigator.pop(context);
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             color: const Color(0xFFBECFDF).withOpacity(0.5),
             borderRadius: BorderRadius.circular(14),
@@ -253,7 +292,8 @@ class _fav_pointState extends State<fav_point> {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              const Icon(Icons.location_on, color: Color(0xFF2E3E4B), size: 25),
+              const Icon(Icons.location_on,
+                  color: Color(0xFF2E3E4B), size: 25),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(
@@ -268,11 +308,13 @@ class _fav_pointState extends State<fav_point> {
               GestureDetector(
                 onTap: () => _confirmDelete(index),
                 child: Container(
-                  width: 32, height: 32,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: Colors.redAccent.withOpacity(0.2),
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.redAccent.withOpacity(0.5)),
+                    border: Border.all(
+                        color: Colors.redAccent.withOpacity(0.5)),
                   ),
                   child: const Icon(Icons.delete_outline,
                       color: Colors.redAccent, size: 17),
@@ -285,7 +327,7 @@ class _fav_pointState extends State<fav_point> {
     );
   }
 
-  // ── واجهة فارغة ──
+  // ── Empty State ──
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -298,7 +340,7 @@ class _fav_pointState extends State<fav_point> {
           ),
           const SizedBox(height: 16),
           Text(
-            'لا توجد نقاط مفضلة',
+            'no_fav_points'.tr(),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -307,7 +349,7 @@ class _fav_pointState extends State<fav_point> {
           ),
           const SizedBox(height: 8),
           Text(
-            'يمكنك إضافة مواقعك المفضلة من الخريطة',
+            'no_fav_points_desc'.tr(),
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withOpacity(0.4),
@@ -348,16 +390,20 @@ class _fav_pointState extends State<fav_point> {
                 Expanded(
                   child: _isLoading
                       ? const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                    child:
+                    CircularProgressIndicator(color: Colors.white),
                   )
                       : pointFav.isEmpty
                       ? _buildEmptyState()
                       : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16),
                     itemCount: pointFav.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
+                    separatorBuilder: (_, __) =>
+                    const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      return _buildFavCard(pointFav[index], index);
+                      return _buildFavCard(
+                          pointFav[index], index);
                     },
                   ),
                 ),

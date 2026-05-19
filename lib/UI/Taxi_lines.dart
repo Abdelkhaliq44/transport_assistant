@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class TaxiLinesScreen extends StatefulWidget {
   final Function(String)? onSelectRoute;
@@ -11,9 +12,9 @@ class TaxiLinesScreen extends StatefulWidget {
 class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
   final List<_FavoriteItem> _items = [
     _FavoriteItem(
-      title: 'Taxi Ain Mlila',
+      titleKey: 'taxi.ain_mlila',
       routeKey: 'taxi',
-      address: 'Toufil,Sonelgaz',
+      addressKey: 'taxi.ain_mlila_address',
       isFav: true,
       isSelected: false,
     ),
@@ -37,9 +38,9 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
               children: [
                 _buildTopBar(),
                 const SizedBox(height: 20),
-                const Text(
-                  'Taxi Lines',
-                  style: TextStyle(
+                Text(
+                  'taxi.title'.tr(),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -93,8 +94,8 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
                     child: TextField(
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Choose your destination',
-                        hintStyle: TextStyle(color: Colors.white, fontSize: 13),
+                        hintText: 'taxi.search_hint'.tr(),
+                        hintStyle: const TextStyle(color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -120,15 +121,15 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
         setState(() {
           for (int i = 0; i < _items.length; i++) {
             _items[i] = _FavoriteItem(
-              title: _items[i].title,
-              routeKey: _items[i].routeKey, // ← أضف
-              address: _items[i].address,
+              titleKey: _items[i].titleKey,
+              routeKey: _items[i].routeKey,
+              addressKey: _items[i].addressKey,
               isFav: _items[i].isFav,
               isSelected: i == index,
             );
           }
         });
-        widget.onSelectRoute?.call(_items[index].routeKey); // ← مرر routeKey
+        widget.onSelectRoute?.call(_items[index].routeKey);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -145,8 +146,8 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Padding(
-              padding: const EdgeInsets.only(top: 20),
+            const Padding(
+              padding: EdgeInsets.only(top: 20),
               child: Icon(Icons.location_on, color: Color(0xFF2E3E4B), size: 25),
             ),
             const SizedBox(width: 10),
@@ -155,7 +156,7 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    item.titleKey.tr(),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
@@ -164,7 +165,7 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    item.address,
+                    item.addressKey.tr(),
                     style: const TextStyle(fontSize: 11, color: Colors.white),
                   ),
                 ],
@@ -176,9 +177,9 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
                 onTap: () {
                   setState(() {
                     _items[index] = _FavoriteItem(
-                      title: item.title,
-                      routeKey: item.routeKey, // ← أضف
-                      address: item.address,
+                      titleKey: item.titleKey,
+                      routeKey: item.routeKey,
+                      addressKey: item.addressKey,
                       isFav: !item.isFav,
                       isSelected: item.isSelected,
                     );
@@ -199,16 +200,16 @@ class _TaxiLinesScreenState extends State<TaxiLinesScreen> {
 }
 
 class _FavoriteItem {
-  final String title;
+  final String titleKey;
   final String routeKey;
-  final String address;
+  final String addressKey;
   final bool isFav;
   final bool isSelected;
 
   _FavoriteItem({
-    required this.title,
+    required this.titleKey,
     required this.routeKey,
-    required this.address,
+    required this.addressKey,
     required this.isFav,
     required this.isSelected,
   });

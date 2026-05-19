@@ -17,7 +17,6 @@ class _TrainLinesScreenState extends State<TrainLinesScreen> {
     1,
         (i) => _FavoriteItem(
       title: ' Train d Aalger',
-
       address: 'Place des Martyrs,Zeralda/Bou Farik/Rghaia',
       isFav: true,
       isSelected: i == 3,

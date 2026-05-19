@@ -103,7 +103,6 @@ class LineResult {
 // ─────────────────────────────────────────────────────────────────────────────
 class HomePage extends StatefulWidget {
   final Function(Locale)? onLocaleChanged;
-  // key يُمرَّر من keys.dart عند إنشاء الـ widget
   const HomePage({super.key, this.onLocaleChanged});
 
   @override
@@ -111,15 +110,14 @@ class HomePage extends StatefulWidget {
 }
 
 class HomePageState extends State<HomePage> {
-  // ── تُستدعى من TrainLinesScreen عند اختيار خط ──
   Future<void> loadLineByName(String lineName) async {
     routeRequest.document = lineName;
     await loadRoute(lineName);
-    // تحريك الكاميرا لأول نقطة في المسار إن وجدت
     if (routePoints.isNotEmpty) {
       _mapController.move(routePoints.first, 14);
     }
   }
+
   final TextEditingController _searchController = TextEditingController();
   List<Places.AutocompletePrediction> _searchPredictions = [];
   List<Places.AutocompletePrediction> _startPredictions = [];
@@ -198,6 +196,7 @@ class HomePageState extends State<HomePage> {
 
   bool get start => _activeField == 'start';
   bool get And => _activeField == 'end';
+
   Future<void> _selectStartPlaceNoMove(Places.AutocompletePrediction prediction) async {
     try {
       final detail = await places.fetchPlace(
@@ -217,7 +216,7 @@ class HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      _snack("تعذّر تحديد نقطة البداية");
+      _snack('error_select_start'.tr());
     }
   }
 
@@ -240,7 +239,7 @@ class HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      _snack("تعذّر تحديد نقطة الوصول");
+      _snack('error_select_end'.tr());
     }
   }
 
@@ -304,7 +303,7 @@ class HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      _snack("تعذّر الانتقال إلى نقطة البداية");
+      _snack('error_navigate_start'.tr());
     }
   }
 
@@ -328,7 +327,7 @@ class HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      _snack("تعذّر الانتقال إلى نقطة الوصول");
+      _snack('error_navigate_end'.tr());
     }
   }
 
@@ -357,7 +356,7 @@ class HomePageState extends State<HomePage> {
         });
       }
     } catch (e) {
-      _snack("تعذّر الانتقال إلى المكان");
+      _snack('error_navigate_place'.tr());
     }
   }
 
@@ -398,9 +397,6 @@ class HomePageState extends State<HomePage> {
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(lineSelectionRequest.toJson()),
       );
-      print("🟠 status: ${response.statusCode}");
-      print("🟠 body: ${response.body}");
-
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final routes = data['data']['routes'] as List;
@@ -409,11 +405,10 @@ class HomePageState extends State<HomePage> {
           _showLineSelector = true;
         });
       } else {
-        _snack("فشل في جلب الخطوط: ${response.statusCode}");
+        _snack('error_fetch_lines'.tr(args: [response.statusCode.toString()]));
       }
     } catch (e) {
-      print("🟠 خطأ: $e");
-      _snack("خطأ في الاتصال: $e");
+      _snack('error_connection'.tr(args: [e.toString()]));
     }
   }
 
@@ -493,72 +488,48 @@ class HomePageState extends State<HomePage> {
     final List data = doc[choice];
     return data.map((e) => LatLng(e['lat'], e['lng'])).toList();
   }
-  Future<void> onSelectRoute(String lineName) async {
-    print("🔴 onSelectRoute نُودي بـ: $lineName");
 
-    // ← امسح كل الخطوط والماركرز أولاً
+  Future<void> onSelectRoute(String lineName) async {
     setState(() {
       L36 = []; L58 = []; L89 = []; L608 = [];
       L12 = []; Tram = []; Metro = []; Teleferik = []; taxi = [];
-
       L36Markers = []; L58Markers = []; L89Markers = [];
       L608Markers = []; L12Markers = []; tramMarkers = [];
       metroMarkers = []; teleferikMarkers = [];
       taxiMarkers = []; busMarkers = []; tranMarkers = [];
     });
 
-    // ← إذا كان taxi استدعي loadRoute مباشرة كما يفعل الزر
     if (lineName == 'taxi') {
       await loadRoute('taxi');
       return;
     }
 
     final routePoints = await loadRouteFromFirebase(lineName, 'points', 'routes');
-    print("📍 عدد النقاط: ${routePoints.length}");
-
     final markerPoints = await loadRouteFromFirebase(lineName, 'marker', 'routes');
-    print("📌 عدد الماركرز: ${markerPoints.length}");
 
     setState(() {
       switch (lineName) {
-        case 'L36':
-          L36 = routePoints;
-          break;
-        case 'L58':
-          L58 = routePoints;
-          break;
-        case 'L89A':
-          L89 = routePoints;
-          break;
-        case 'L608A':
-          L608 = routePoints;
-          break;
-        case 'L12':
-          L12 = routePoints;
-          break;
-        case 'tram':
-          Tram = routePoints;
-          break;
-        case 'metro':
-          Metro = routePoints;
-          break;
-        case 'teleferik':
-          Teleferik = routePoints;
-          break;
+        case 'L36':   L36 = routePoints; break;
+        case 'L58':   L58 = routePoints; break;
+        case 'L89A':  L89 = routePoints; break;
+        case 'L608A': L608 = routePoints; break;
+        case 'L12':   L12 = routePoints; break;
+        case 'tram':  Tram = routePoints; break;
+        case 'metro': Metro = routePoints; break;
+        case 'teleferik': Teleferik = routePoints; break;
       }
     });
 
     await buildMarkers(lineName, markerPoints);
 
-    // ← حرّك الكاميرا لموقع الخط
     if (markerPoints.isNotEmpty) {
       _mapController.move(markerPoints.first, 14);
     } else if (routePoints.isNotEmpty) {
       _mapController.move(routePoints.first, 14);
     }
   }
-  Future<void> loadAllRoutes() async {
 
+  Future<void> loadAllRoutes() async {
     await loadRoute('L36');
     await loadRoute('L58');
     await loadRoute('L89A');
@@ -572,24 +543,21 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<void> loadRoute(String type) async {
-    print("🟡 loadRoute نُودي بـ: $type");
     final points = await loadRouteFromFirebase(type, 'points', 'routes');
-    print("🟡 points: ${points.length}");
     final markers = await loadRouteFromFirebase(type, 'marker', 'routes');
-    print("🟡 markers: ${markers.length}");
 
     setState(() {
       switch (type) {
-        case 'L36': L36 = points; break;
-        case 'L58': L58 = points; break;
-        case 'L89A': L89 = points; break;
+        case 'L36':   L36 = points; break;
+        case 'L58':   L58 = points; break;
+        case 'L89A':  L89 = points; break;
         case 'L608A': L608 = points; break;
-        case 'L12': L12 = points; break;
-        case 'tram': Tram = points; break;
+        case 'L12':   L12 = points; break;
+        case 'tram':  Tram = points; break;
         case 'metro': Metro = points; break;
         case 'teleferik': Teleferik = points; break;
-        case 'taxi': taxi = points; break;
-        default: routePoints = points; break;
+        case 'taxi':  taxi = points; break;
+        default:      routePoints = points; break;
       }
     });
 
@@ -634,73 +602,58 @@ class HomePageState extends State<HomePage> {
         .toList();
 
     setState(() {
-      if (type == "taxi") { taxiMarkers = temp; busMarkers.clear(); }
-      if (type == "bus") { busMarkers = temp; taxiMarkers.clear(); }
-      if (type == "tram") tramMarkers = temp;
-      if (type == "metro") metroMarkers = temp;
+      if (type == "taxi")     { taxiMarkers = temp; busMarkers.clear(); }
+      if (type == "bus")      { busMarkers = temp; taxiMarkers.clear(); }
+      if (type == "tram")     tramMarkers = temp;
+      if (type == "metro")    metroMarkers = temp;
       if (type == "teleferik") teleferikMarkers = temp;
-      if (type == "tran") tranMarkers = temp;
-      if (type == "L12") L12Markers = temp;
-      if (type == "L58") L58Markers = temp;
-      if (type == "L608A") L608Markers = temp;
-      if (type == "L36") L36Markers = temp;
-      if (type == "L89A") L89Markers = temp;
+      if (type == "tran")     tranMarkers = temp;
+      if (type == "L12")      L12Markers = temp;
+      if (type == "L58")      L58Markers = temp;
+      if (type == "L608A")    L608Markers = temp;
+      if (type == "L36")      L36Markers = temp;
+      if (type == "L89A")     L89Markers = temp;
     });
   }
 
   Color _getMarkerColor(String type) {
     switch (type) {
-      case "taxi":      return const Color(0xFFFFC107); // أصفر
+      case "taxi":      return const Color(0xFFFFC107);
       case "bus":
       case "L12":
       case "L36":
       case "L58":
       case "L608A":
-      case "L89A":      return const Color(0xFF1565C0); // أزرق غامق
-      case "tram":      return const Color(0xFF6A1B9A); // بنفسجي
-      case "metro":     return const Color(0xFFBF360C); // برتقالي غامق
-      case "teleferik": return const Color(0xFF00695C); // أخضر غامق
-      case "tran":      return const Color(0xFFC62828); // أحمر
+      case "L89A":      return const Color(0xFF1565C0);
+      case "tram":      return const Color(0xFF6A1B9A);
+      case "metro":     return const Color(0xFFBF360C);
+      case "teleferik": return const Color(0xFF00695C);
+      case "tran":      return const Color(0xFFC62828);
       default:          return const Color(0xFF37474F);
     }
   }
 
   Widget getIcon(String type) {
     switch (type) {
-      case "taxi":
-        return const FaIcon(FontAwesomeIcons.taxi, color: Colors.white, size: 20);
-      case "bus":
-        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
-      case "tram":
-        return const FaIcon(FontAwesomeIcons.trainTram, color: Colors.white, size: 20);
-      case "metro":
-        return const FaIcon(FontAwesomeIcons.train, color: Colors.white, size: 20);
-      case "teleferik":
-        return const FaIcon(FontAwesomeIcons.cableCar, color: Colors.white, size: 20);
-      case "tran":
-        return const FaIcon(FontAwesomeIcons.trainSubway, color: Colors.white, size: 20);
-      case "L12":
-        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
-      case "L36":
-        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
-      case "L58":
-        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
-      case "L608A":
-        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
-      case "L89A":
-        return const FaIcon(FontAwesomeIcons.bus, color: Colors.white, size: 20);
-      default:
-        return const FaIcon(FontAwesomeIcons.locationDot, color: Colors.white, size: 20);
+      case "taxi":      return const FaIcon(FontAwesomeIcons.taxi,        color: Colors.white, size: 20);
+      case "bus":       return const FaIcon(FontAwesomeIcons.bus,         color: Colors.white, size: 20);
+      case "tram":      return const FaIcon(FontAwesomeIcons.trainTram,   color: Colors.white, size: 20);
+      case "metro":     return const FaIcon(FontAwesomeIcons.train,       color: Colors.white, size: 20);
+      case "teleferik": return const FaIcon(FontAwesomeIcons.cableCar,    color: Colors.white, size: 20);
+      case "tran":      return const FaIcon(FontAwesomeIcons.trainSubway, color: Colors.white, size: 20);
+      case "L12":       return const FaIcon(FontAwesomeIcons.bus,         color: Colors.white, size: 20);
+      case "L36":       return const FaIcon(FontAwesomeIcons.bus,         color: Colors.white, size: 20);
+      case "L58":       return const FaIcon(FontAwesomeIcons.bus,         color: Colors.white, size: 20);
+      case "L608A":     return const FaIcon(FontAwesomeIcons.bus,         color: Colors.white, size: 20);
+      case "L89A":      return const FaIcon(FontAwesomeIcons.bus,         color: Colors.white, size: 20);
+      default:          return const FaIcon(FontAwesomeIcons.locationDot, color: Colors.white, size: 20);
     }
   }
-
-
 
   // ── Map interactions ─────────────────────────────────────────────────────────
   Future<void> _onTransportSelected(int index) async {
     setState(() {
       _selectedTransport = index;
-      // ← امسح كل الخطوط والماركرز أولاً
       L36 = []; L58 = []; L89 = []; L608 = [];
       L12 = []; Tram = []; Metro = []; Teleferik = []; taxi = [];
       L36Markers = []; L58Markers = []; L89Markers = [];
@@ -710,33 +663,18 @@ class HomePageState extends State<HomePage> {
     });
 
     switch (index) {
-      case 0: // ← taxi
-        await loadRoute('taxi');
-        break;
-
-      case 1: // ← bus — كل خطوط الباص
+      case 0: await loadRoute('taxi'); break;
+      case 1:
         await loadRoute('L36');
         await loadRoute('L58');
         await loadRoute('L89A');
         await loadRoute('L608A');
         await loadRoute('L12');
         break;
-
-      case 2: // ← train
-        await loadRoute('tran');
-        break;
-
-      case 3: // ← tram
-        await loadRoute('tram');
-        break;
-
-      case 4: // ← metro
-        await loadRoute('metro');
-        break;
-
-      case 5: // ← teleferik
-        await loadRoute('teleferik');
-        break;
+      case 2: await loadRoute('tran');      break;
+      case 3: await loadRoute('tram');      break;
+      case 4: await loadRoute('metro');     break;
+      case 5: await loadRoute('teleferik'); break;
     }
   }
 
@@ -793,7 +731,7 @@ class HomePageState extends State<HomePage> {
         });
       }
     } catch (_) {
-      _snack("حدث خطأ أثناء جلب العنوان");
+      _snack('error_fetch_address'.tr());
     }
   }
 
@@ -813,7 +751,7 @@ class HomePageState extends State<HomePage> {
             .map((e) => (e as List<dynamic>).map((v) => v.toString()).toList())
             .toList();
       });
-      _snack("تم الحذف من المفضلة");
+      _snack('removed_from_favorites'.tr());
     } else {
       favData["point${favData.length + 1}"] = ['$place', '$lat', '$lng'];
       await docRef.set(favData);
@@ -823,7 +761,7 @@ class HomePageState extends State<HomePage> {
             .map((e) => (e as List<dynamic>).map((v) => v.toString()).toList())
             .toList();
       });
-      _snack("تمت الإضافة إلى المفضلة!");
+      _snack('added_to_favorites'.tr());
     }
   }
 
@@ -843,7 +781,7 @@ class HomePageState extends State<HomePage> {
             .map((e) => (e as List<dynamic>).map((v) => v.toString()).toList())
             .toList();
       });
-      _snack("تم الحذف من المحفوظة");
+      _snack('removed_from_saved'.tr());
     } else {
       favData["point${favData.length + 1}"] = ['$place', '$lat', '$lng'];
       await docRef.set(favData);
@@ -853,7 +791,7 @@ class HomePageState extends State<HomePage> {
             .map((e) => (e as List<dynamic>).map((v) => v.toString()).toList())
             .toList();
       });
-      _snack("تمت الإضافة إلى المحفوظة!");
+      _snack('added_to_saved'.tr());
     }
   }
 
@@ -866,23 +804,19 @@ class HomePageState extends State<HomePage> {
     if (perm == LocationPermission.denied) {
       perm = await Geolocator.requestPermission();
       if (perm == LocationPermission.denied) {
-        _snack("location_permission_denied".tr());
+        _snack('location_permission_denied'.tr());
         return;
       }
     }
     if (perm == LocationPermission.deniedForever) {
-      _snack("location_permission_denied_forever".tr());
+      _snack('location_permission_denied_forever'.tr());
       return;
     }
     final pos = await Geolocator.getCurrentPosition(
       desiredAccuracy: LocationAccuracy.high,
     );
     final myLocation = LatLng(pos.latitude, pos.longitude);
-
-    // ← حرّك الكاميرا
     _mapController.move(myLocation, 17);
-
-    // ← أضف marker على موقعك
     setState(() {
       _Markers
         ..clear()
@@ -968,14 +902,12 @@ class HomePageState extends State<HomePage> {
     final endText = _endController.text.trim();
 
     if (startText.isEmpty || endText.isEmpty) {
-      _snack("يرجى تحديد نقطة البداية ونقطة الوصول أولاً");
+      _snack('error_select_start_end'.tr());
       return;
     }
 
-    // ← استدعي الـ agent أولاً
     await selectLines();
 
-    // ← ثم أظهر الـ alert
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
@@ -1092,9 +1024,7 @@ class HomePageState extends State<HomePage> {
                   fit: FlexFit.loose,
                   child: _buildActivePanel(),
                 ),
-                Expanded(
-                 child: Stack(
-                children: []))
+                Expanded(child: Stack(children: []))
               ],
             ),
           ),
@@ -1115,29 +1045,26 @@ class HomePageState extends State<HomePage> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                _mapFab("loc", Icons.my_location, _goToMyLocation),
+                _mapFab("loc",     Icons.my_location, _goToMyLocation),
                 const SizedBox(height: 8),
-                _mapFab("zoom_in", Icons.add, _zoomIn),
+                _mapFab("zoom_in",  Icons.add,    _zoomIn),
                 const SizedBox(height: 8),
                 _mapFab("zoom_out", Icons.remove, _zoomOut),
               ],
             ),
           ),
+
           // ── 3. Location Card ────────────────────────────────────────────────
           if (_showLocationCard && _selectedAddress != null)
             Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
+              left: 0, right: 0, bottom: 0,
               child: _buildLocationCard(),
             ),
 
           // ── 4. Route Card ───────────────────────────────────────────────────
           if (_showRouteCard)
             Positioned(
-              left: 0,
-              right: 0,
-              bottom: 0,
+              left: 0, right: 0, bottom: 0,
               child: _buildRouteCard(),
             ),
 
@@ -1174,7 +1101,7 @@ class HomePageState extends State<HomePage> {
                     ),
                     const Expanded(child: SizedBox.shrink()),
                     Padding(
-                      padding: const EdgeInsets.fromLTRB(50,0,50,0),
+                      padding: const EdgeInsets.fromLTRB(50, 0, 50, 0),
                       child: AnimatedSwitcher(
                         duration: const Duration(milliseconds: 300),
                         transitionBuilder: (child, anim) => SlideTransition(
@@ -1192,8 +1119,7 @@ class HomePageState extends State<HomePage> {
                           decoration: BoxDecoration(
                             color: const Color(0xFF1C2B3A),
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                                color: const Color(0xFF4A9EFF), width: 1.5),
+                            border: Border.all(color: const Color(0xFF4A9EFF), width: 1.5),
                             boxShadow: [
                               BoxShadow(
                                 color: const Color(0xFF4A9EFF).withOpacity(0.25),
@@ -1205,8 +1131,7 @@ class HomePageState extends State<HomePage> {
                           child: Row(
                             children: [
                               Container(
-                                width: 36,
-                                height: 36,
+                                width: 36, height: 36,
                                 decoration: BoxDecoration(
                                   color: const Color(0xFF4A9EFF).withOpacity(0.15),
                                   shape: BoxShape.circle,
@@ -1221,8 +1146,8 @@ class HomePageState extends State<HomePage> {
                                   children: [
                                     Text(
                                       _pickerTarget == 'start'
-                                          ? 'نقطة الانطلاق'
-                                          : 'نقطة الوصول',
+                                          ? 'picker_start_label'.tr()
+                                          : 'picker_end_label'.tr(),
                                       style: const TextStyle(
                                         color: Color(0xFF4A9EFF),
                                         fontSize: 11,
@@ -1249,8 +1174,7 @@ class HomePageState extends State<HomePage> {
                             : Container(
                           key: const ValueKey('hint'),
                           margin: const EdgeInsets.symmetric(horizontal: 24),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 18, vertical: 12),
+                          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                           decoration: BoxDecoration(
                             color: const Color(0xFF2E3E4B).withOpacity(0.88),
                             borderRadius: BorderRadius.circular(16),
@@ -1258,15 +1182,13 @@ class HomePageState extends State<HomePage> {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.touch_app,
-                                  color: Colors.white70, size: 18),
+                              const Icon(Icons.touch_app, color: Colors.white70, size: 18),
                               const SizedBox(width: 8),
                               Text(
                                 _pickerTarget == 'start'
-                                    ? 'اضغط على نقطة الانطلاق'
-                                    : 'اضغط على نقطة الوصول',
-                                style: const TextStyle(
-                                    color: Colors.white, fontSize: 13),
+                                    ? 'picker_tap_start'.tr()
+                                    : 'picker_tap_end'.tr(),
+                                style: const TextStyle(color: Colors.white, fontSize: 13),
                               ),
                             ],
                           ),
@@ -1329,8 +1251,8 @@ class HomePageState extends State<HomePage> {
                               const SizedBox(width: 8),
                               Text(
                                 _pendingPickerAddress == null
-                                    ? 'اختر مكاناً من الخريطة'
-                                    : 'تأكيد الاختيار',
+                                    ? 'picker_btn_choose'.tr()
+                                    : 'picker_btn_confirm'.tr(),
                                 style: const TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w600,
@@ -1352,10 +1274,10 @@ class HomePageState extends State<HomePage> {
 
   // ── Panel router ─────────────────────────────────────────────────────────────
   Widget _buildActivePanel() {
-    if (_showMapPicker) return const SizedBox.shrink();
-    if (_showRouteCard) return _buildTopBar();
-    if (_showGetLine) return _buildGetLinePanel();
-    if (_showSearch) return _buildSearchPanel();
+    if (_showMapPicker)  return const SizedBox.shrink();
+    if (_showRouteCard)  return _buildTopBar();
+    if (_showGetLine)    return _buildGetLinePanel();
+    if (_showSearch)     return _buildSearchPanel();
     return _buildTopBar();
   }
 
@@ -1367,8 +1289,7 @@ class HomePageState extends State<HomePage> {
         children: [
           Image.asset(
             'assets/images/67460f18808338f4f4b8dd938dff42beca7021c8.png',
-            width: 40,
-            height: 40,
+            width: 40, height: 40,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -1388,7 +1309,7 @@ class HomePageState extends State<HomePage> {
                     const SizedBox(width: 14),
                     Expanded(
                       child: Text(
-                        'Choose your destination',
+                        'search_hint'.tr(),
                         style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
                       ),
                     ),
@@ -1431,9 +1352,8 @@ class HomePageState extends State<HomePage> {
                           autofocus: true,
                           style: const TextStyle(color: Colors.white, fontSize: 14),
                           decoration: InputDecoration(
-                            hintText: 'Search a destination',
-                            hintStyle:
-                            TextStyle(color: Colors.grey.shade500, fontSize: 13),
+                            hintText: 'search_destination_hint'.tr(),
+                            hintStyle: TextStyle(color: Colors.grey.shade500, fontSize: 13),
                             border: InputBorder.none,
                             isDense: true,
                             contentPadding: EdgeInsets.zero,
@@ -1456,8 +1376,7 @@ class HomePageState extends State<HomePage> {
                         },
                         child: Padding(
                           padding: const EdgeInsets.only(right: 10),
-                          child: Icon(Icons.search,
-                              color: Colors.grey.shade400, size: 20),
+                          child: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
                         ),
                       ),
                     ],
@@ -1488,16 +1407,14 @@ class HomePageState extends State<HomePage> {
                 shrinkWrap: true,
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 itemCount: _searchPredictions.length,
-                separatorBuilder: (_, __) =>
-                const Divider(color: Colors.white12, height: 1),
+                separatorBuilder: (_, __) => const Divider(color: Colors.white12, height: 1),
                 itemBuilder: (_, i) {
                   final pred = _searchPredictions[i];
                   return InkWell(
                     onTap: () => _goToSearchedPlace(pred),
                     borderRadius: BorderRadius.circular(10),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       child: Row(
                         children: [
                           const Icon(Icons.location_on_outlined,
@@ -1507,22 +1424,17 @@ class HomePageState extends State<HomePage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                Text(
-                                  pred.primaryText ?? '',
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                if ((pred.secondaryText ?? '').isNotEmpty)
-                                  Text(
-                                    pred.secondaryText ?? '',
+                                Text(pred.primaryText ?? '',
                                     style: const TextStyle(
-                                        color: Colors.white54, fontSize: 11),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600)),
+                                if ((pred.secondaryText ?? '').isNotEmpty)
+                                  Text(pred.secondaryText ?? '',
+                                      style: const TextStyle(
+                                          color: Colors.white54, fontSize: 11),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis),
                               ],
                             ),
                           ),
@@ -1543,7 +1455,7 @@ class HomePageState extends State<HomePage> {
             children: [
               _optionButton(
                 icon: Icons.bookmark_border,
-                label: 'Saved\nPlaces',
+                label: 'saved_places'.tr(),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -1556,14 +1468,14 @@ class HomePageState extends State<HomePage> {
               const SizedBox(width: 10),
               _optionButton(
                 icon: Icons.history,
-                label: 'History\nPlaces',
+                label: 'history_places'.tr(),
                 onTap: () => Navigator.push(
                     context, MaterialPageRoute(builder: (_) => const Register())),
               ),
               const SizedBox(width: 10),
               _optionButton(
                 icon: Icons.favorite_border,
-                label: 'Favorites\nPlaces',
+                label: 'favorite_places'.tr(),
                 onTap: () => Navigator.push(
                   context,
                   MaterialPageRoute(
@@ -1578,7 +1490,7 @@ class HomePageState extends State<HomePage> {
           const SizedBox(height: 14),
           _primaryButton(
             icon: Icons.sync_alt,
-            label: 'Choose Start/End points',
+            label: 'choose_start_end'.tr(),
             onPressed: () => setState(() {
               _showSearch = false;
               _showGetLine = true;
@@ -1595,19 +1507,16 @@ class HomePageState extends State<HomePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Start + End points مع دوائر متناسقة
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // عمود الدوائر والخط الرابط
               Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 10), // توسيط الدائرة مع TextField
+                  const SizedBox(height: 10),
                   _dot(filled: false),
                   Container(
-                    width: 1.5,
-                    height: 34,
+                    width: 1.5, height: 34,
                     color: Colors.white38,
                     margin: const EdgeInsets.symmetric(vertical: 3),
                   ),
@@ -1616,18 +1525,16 @@ class HomePageState extends State<HomePage> {
                 ],
               ),
               const SizedBox(width: 10),
-              // عمود الـ TextFields
               Expanded(
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // نقطة البداية
                     Row(
                       children: [
                         Expanded(
                           child: _activeTextField(
                             controller: _startController,
-                            hint: 'Current position',
+                            hint: 'current_position'.tr(),
                             isActive: _activeField == 'start',
                             fieldType: 'start',
                           ),
@@ -1637,13 +1544,12 @@ class HomePageState extends State<HomePage> {
                       ],
                     ),
                     const SizedBox(height: 10),
-                    // نقطة النهاية
                     Row(
                       children: [
                         Expanded(
                           child: _activeTextField(
                             controller: _endController,
-                            hint: 'Choose a destination',
+                            hint: 'choose_destination'.tr(),
                             isActive: _activeField == 'end',
                             fieldType: 'end',
                           ),
@@ -1670,9 +1576,9 @@ class HomePageState extends State<HomePage> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "تفضيلات الرحلة",
-                  style: TextStyle(
+                Text(
+                  'trip_preferences'.tr(),
+                  style: const TextStyle(
                     color: Colors.white70,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
@@ -1682,24 +1588,19 @@ class HomePageState extends State<HomePage> {
                 const SizedBox(height: 8),
                 Row(
                   children: [
-                    Expanded(
-                        child: _prefChip("التكلفة", selectedCost,
-                                (v) => setState(() => selectedCost = v))),
+                    Expanded(child: _prefChip('pref_cost'.tr(),    selectedCost,    (v) => setState(() => selectedCost = v))),
                     const SizedBox(width: 6),
-                    Expanded(
-                        child: _prefChip("الوقت", selectedTime,
-                                (v) => setState(() => selectedTime = v))),
+                    Expanded(child: _prefChip('pref_time'.tr(),    selectedTime,    (v) => setState(() => selectedTime = v))),
                     const SizedBox(width: 6),
-                    Expanded(
-                        child: _prefChip("الراحة", selectedComfort,
-                                (v) => setState(() => selectedComfort = v))),
+                    Expanded(child: _prefChip('pref_comfort'.tr(), selectedComfort, (v) => setState(() => selectedComfort = v))),
                   ],
                 ),
               ],
             ),
           ),
           const SizedBox(height: 10),
-          // Suggested lines list — محدودة الارتفاع لمنع الـ overflow
+
+          // Suggested lines
           if (_showLineSelector && suggestedLines.isNotEmpty) ...[
             const SizedBox(height: 10),
             ConstrainedBox(
@@ -1713,13 +1614,13 @@ class HomePageState extends State<HomePage> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Padding(
-                      padding: EdgeInsets.fromLTRB(12, 8, 12, 4),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
                       child: Align(
                         alignment: Alignment.centerRight,
                         child: Text(
-                          "الخطوط المقترحة:",
-                          style: TextStyle(
+                          'suggested_lines'.tr(),
+                          style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 12),
@@ -1763,7 +1664,7 @@ class HomePageState extends State<HomePage> {
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: Text(
-                                      "${line.score.toInt()} نقطة",
+                                      'score_points'.tr(args: [line.score.toInt().toString()]),
                                       style: const TextStyle(
                                           color: Colors.white, fontSize: 11),
                                     ),
@@ -1793,14 +1694,12 @@ class HomePageState extends State<HomePage> {
                 final endText = _endController.text.trim();
 
                 if (startText.isEmpty || endText.isEmpty) {
-                  _snack("يرجى تحديد نقطة البداية ونقطة الوصول أولاً");
+                  _snack('error_select_start_end'.tr());
                   return;
                 }
 
-                // ← استدعي الـ agent أولاً
                 await selectLines();
 
-                // ← ثم أظهر الـ alert
                 showModalBottomSheet(
                   context: context,
                   backgroundColor: Colors.transparent,
@@ -1825,12 +1724,48 @@ class HomePageState extends State<HomePage> {
                 elevation: 0,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(23)),
               ),
-              child: const Text(
-                'Get Line',
-                style: TextStyle(
+              child: Text(
+                'get_line'.tr(),
+                style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF2E3E4B)),
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+
+// Back button
+          SizedBox(
+            width: double.infinity,
+            height: 46,
+            child: TextButton(
+              onPressed: () {
+                setState(() {
+                  _showGetLine = false;
+                  _showSearch = true;
+                });
+              },
+              style: TextButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF3A4F65), width: 1),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(23),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Icons.arrow_back_ios_new_rounded, size: 14, color: Colors.white70),
+                  const SizedBox(width: 6),
+                  Text(
+                    'back'.tr(),
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white70,
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -1838,6 +1773,7 @@ class HomePageState extends State<HomePage> {
       ),
     );
   }
+
   Widget _buildGetLineAlert(
       String startText,
       String endText, {
@@ -1849,7 +1785,7 @@ class HomePageState extends State<HomePage> {
       decoration: BoxDecoration(
         color: const Color(0xFF1C2B3A),
         borderRadius: BorderRadius.circular(24),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(color: Colors.black45, blurRadius: 20, offset: Offset(0, -4)),
         ],
       ),
@@ -1859,8 +1795,7 @@ class HomePageState extends State<HomePage> {
           // Handle bar
           Center(
             child: Container(
-              width: 36,
-              height: 4,
+              width: 36, height: 4,
               margin: const EdgeInsets.only(bottom: 18),
               decoration: BoxDecoration(
                 color: Colors.white24,
@@ -1869,22 +1804,17 @@ class HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Card المسار
-
-
           const SizedBox(height: 16),
 
-          // ← Cards الخطوط المقترحة من الـ agent
           if (suggestedLines.isNotEmpty) ...[
             Align(
               alignment: Alignment.centerRight,
               child: Text(
-                "الخطوط المقترحة:",
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
+                'suggested_lines'.tr(),
+                style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600),
               ),
             ),
             const SizedBox(height: 8),
@@ -1899,16 +1829,12 @@ class HomePageState extends State<HomePage> {
                   return GestureDetector(
                     onTap: () async {
                       Navigator.pop(context);
-                      // ← اختر هذا الخط مباشرة
                       await onSelectRoute(line.lineName);
-                      setState(() {
-                        _showGetLine = false;
-                      });
+                      setState(() => _showGetLine = false);
                     },
                     child: Container(
                       margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
                         color: const Color(0xFF2E3E4B),
                         borderRadius: BorderRadius.circular(14),
@@ -1916,10 +1842,8 @@ class HomePageState extends State<HomePage> {
                       ),
                       child: Row(
                         children: [
-                          // أيقونة الخط
                           Container(
-                            width: 38,
-                            height: 38,
+                            width: 38, height: 38,
                             decoration: BoxDecoration(
                               color: _getMarkerColor(line.lineName),
                               shape: BoxShape.circle,
@@ -1927,18 +1851,15 @@ class HomePageState extends State<HomePage> {
                             child: Center(child: getIcon(line.lineName)),
                           ),
                           const SizedBox(width: 12),
-                          // اسم الخط
                           Expanded(
                             child: Text(
                               line.lineName,
                               style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                              ),
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600),
                             ),
                           ),
-                          // النقاط
                           Container(
                             padding: const EdgeInsets.symmetric(
                                 horizontal: 10, vertical: 5),
@@ -1947,7 +1868,7 @@ class HomePageState extends State<HomePage> {
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Text(
-                              "${line.score.toInt()} نقطة",
+                              'score_points'.tr(args: [line.score.toInt().toString()]),
                               style: const TextStyle(
                                   color: Colors.white, fontSize: 11),
                             ),
@@ -1961,7 +1882,6 @@ class HomePageState extends State<HomePage> {
             ),
             const SizedBox(height: 12),
           ] else ...[
-            // ← إذا لم يتم استدعاء الـ agent بعد
             Container(
               padding: const EdgeInsets.all(14),
               decoration: BoxDecoration(
@@ -1973,10 +1893,10 @@ class HomePageState extends State<HomePage> {
                 children: [
                   const Icon(Icons.info_outline, color: Colors.white54, size: 18),
                   const SizedBox(width: 10),
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'اضغط "اقترح أفضل خط" أولاً للحصول على توصيات',
-                      style: TextStyle(color: Colors.white54, fontSize: 12),
+                      'press_get_line_first'.tr(),
+                      style: const TextStyle(color: Colors.white54, fontSize: 12),
                     ),
                   ),
                 ],
@@ -1985,7 +1905,7 @@ class HomePageState extends State<HomePage> {
             const SizedBox(height: 12),
           ],
 
-          // زر Trace Line
+          // Trace Line button
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -1995,32 +1915,30 @@ class HomePageState extends State<HomePage> {
                 backgroundColor: const Color(0xFF4A9EFF),
                 elevation: 4,
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(25),
-                ),
+                    borderRadius: BorderRadius.circular(25)),
               ),
               icon: const Icon(Icons.route, color: Colors.white, size: 20),
-              label: const Text(
-                'Trace Line',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: Colors.white,
-                ),
+              label: Text(
+                'trace_line'.tr(),
+                style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white),
               ),
             ),
           ),
 
           const SizedBox(height: 10),
 
-          // زر إغلاق
+          // Cancel button
           SizedBox(
             width: double.infinity,
             height: 44,
             child: TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text(
-                'إلغاء',
-                style: TextStyle(color: Colors.white54, fontSize: 14),
+              child: Text(
+                'cancel'.tr(),
+                style: const TextStyle(color: Colors.white54, fontSize: 14),
               ),
             ),
           ),
@@ -2047,19 +1965,15 @@ class HomePageState extends State<HomePage> {
         ],
       ),
       padding: EdgeInsets.fromLTRB(
-        20,
-        14,
-        20,
+        20, 14, 20,
         20 + MediaQuery.of(context).padding.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // Handle bar
           Center(
             child: Container(
-              width: 36,
-              height: 4,
+              width: 36, height: 4,
               margin: const EdgeInsets.only(bottom: 18),
               decoration: BoxDecoration(
                 color: Colors.white24,
@@ -2073,20 +1987,16 @@ class HomePageState extends State<HomePage> {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Container(
-                width: 22,
-                height: 22,
+                width: 22, height: 22,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2.5),
                 ),
                 child: Center(
                   child: Container(
-                    width: 8,
-                    height: 8,
+                    width: 8, height: 8,
                     decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
+                        color: Colors.white, shape: BoxShape.circle),
                   ),
                 ),
               ),
@@ -2095,45 +2005,32 @@ class HomePageState extends State<HomePage> {
                 child: Text(
                   startText,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
               const SizedBox(width: 8),
-              _bsIconBtn(
-                Icons.save_outlined,
-                const Color(0xFF3A4F65),
-                onTap: () {
-                  if (startPointSelected != null) {
-                    _toggleSavepoint(startPointSelected!.longitude,
-                        startPointSelected!.latitude, startText);
-                  }
-                },
-              ),
+              _bsIconBtn(Icons.save_outlined, const Color(0xFF3A4F65), onTap: () {
+                if (startPointSelected != null) {
+                  _toggleSavepoint(startPointSelected!.longitude,
+                      startPointSelected!.latitude, startText);
+                }
+              }),
               const SizedBox(width: 6),
-              _bsIconBtn(
-                Icons.favorite_border,
-                const Color(0xFF3A4F65),
-                onTap: () {
-                  if (startPointSelected != null) {
-                    _toggleFavpoint(startPointSelected!.longitude,
-                        startPointSelected!.latitude, startText);
-                  }
-                },
-              ),
+              _bsIconBtn(Icons.favorite_border, const Color(0xFF3A4F65), onTap: () {
+                if (startPointSelected != null) {
+                  _toggleFavpoint(startPointSelected!.longitude,
+                      startPointSelected!.latitude, startText);
+                }
+              }),
               const SizedBox(width: 6),
-              _bsIconBtn(
-                Icons.close,
-                const Color(0xFF3A4F65),
-                onTap: () => setState(() {
-                  _showRouteCard = false;
-                  _showGetLine = true;
-                }),
-              ),
+              _bsIconBtn(Icons.close, const Color(0xFF3A4F65), onTap: () => setState(() {
+                _showRouteCard = false;
+                _showGetLine = true;
+              })),
             ],
           ),
 
@@ -2142,18 +2039,13 @@ class HomePageState extends State<HomePage> {
             padding: const EdgeInsets.only(left: 10, top: 4, bottom: 4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(
-                4,
-                    (_) => Container(
-                  width: 1.5,
-                  height: 5,
-                  margin: const EdgeInsets.symmetric(vertical: 2),
-                  decoration: BoxDecoration(
+              children: List.generate(4, (_) => Container(
+                width: 1.5, height: 5,
+                margin: const EdgeInsets.symmetric(vertical: 2),
+                decoration: BoxDecoration(
                     color: Colors.white38,
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                ),
-              ),
+                    borderRadius: BorderRadius.circular(1)),
+              )),
             ),
           ),
 
@@ -2167,10 +2059,9 @@ class HomePageState extends State<HomePage> {
                 child: Text(
                   endText,
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -2197,9 +2088,7 @@ class HomePageState extends State<HomePage> {
         ],
       ),
       padding: EdgeInsets.fromLTRB(
-        20,
-        14,
-        20,
+        20, 14, 20,
         20 + MediaQuery.of(context).padding.bottom,
       ),
       child: Column(
@@ -2207,13 +2096,10 @@ class HomePageState extends State<HomePage> {
         children: [
           Center(
             child: Container(
-              width: 36,
-              height: 4,
+              width: 36, height: 4,
               margin: const EdgeInsets.only(bottom: 16),
               decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
+                  color: Colors.white24, borderRadius: BorderRadius.circular(2)),
             ),
           ),
           Row(
@@ -2225,10 +2111,9 @@ class HomePageState extends State<HomePage> {
                 child: Text(
                   _selectedAddress ?? '',
                   style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                  ),
+                      color: Colors.white,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -2241,11 +2126,8 @@ class HomePageState extends State<HomePage> {
                     : const Color(0xFF3A4F65),
                 onTap: () {
                   if (_selectedPoint != null && _selectedAddress != null) {
-                    _toggleFavpoint(
-                      _selectedPoint!.longitude,
-                      _selectedPoint!.latitude,
-                      _selectedAddress!,
-                    );
+                    _toggleFavpoint(_selectedPoint!.longitude,
+                        _selectedPoint!.latitude, _selectedAddress!);
                   }
                 },
               ),
@@ -2257,24 +2139,17 @@ class HomePageState extends State<HomePage> {
                     : const Color(0xFF3A4F65),
                 onTap: () {
                   if (_selectedPoint != null && _selectedAddress != null) {
-                    _toggleSavepoint(
-                      _selectedPoint!.longitude,
-                      _selectedPoint!.latitude,
-                      _selectedAddress!,
-                    );
+                    _toggleSavepoint(_selectedPoint!.longitude,
+                        _selectedPoint!.latitude, _selectedAddress!);
                   }
                 },
               ),
               const SizedBox(width: 6),
-              _bsIconBtn(
-                Icons.close,
-                const Color(0xFF3A4F65),
-                onTap: () => setState(() {
-                  _showLocationCard = false;
-                  _isSaved = false;
-                  _isFavorite = false;
-                }),
-              ),
+              _bsIconBtn(Icons.close, const Color(0xFF3A4F65), onTap: () => setState(() {
+                _showLocationCard = false;
+                _isSaved = false;
+                _isFavorite = false;
+              })),
             ],
           ),
         ],
@@ -2285,7 +2160,6 @@ class HomePageState extends State<HomePage> {
   // ── Shared small widgets ─────────────────────────────────────────────────────
   Widget _prefChip(String label, String value, void Function(String) onChange) {
     const options = ["low", "medium", "high"];
-    final labelMap = {"low": "منخفض", "medium": "متوسط", "high": "عالي"};
     return GestureDetector(
       onTap: () {
         final idx = options.indexOf(value);
@@ -2309,7 +2183,12 @@ class HomePageState extends State<HomePage> {
                     fontWeight: FontWeight.w500)),
             const SizedBox(height: 3),
             Text(
-              labelMap[value] ?? value,
+              // translate the value level
+              value == "low"
+                  ? 'pref_low'.tr()
+                  : value == "medium"
+                  ? 'pref_medium'.tr()
+                  : 'pref_high'.tr(),
               style: TextStyle(
                 color: value == "high"
                     ? Colors.redAccent
@@ -2349,13 +2228,10 @@ class HomePageState extends State<HomePage> {
               width: isActive ? 2.0 : 1.0,
             ),
             boxShadow: isActive
-                ? [
-              BoxShadow(
-                color: const Color(0xFF4A9EFF).withOpacity(0.2),
-                blurRadius: 8,
-                spreadRadius: 1,
-              )
-            ]
+                ? [BoxShadow(
+              color: const Color(0xFF4A9EFF).withOpacity(0.2),
+              blurRadius: 8, spreadRadius: 1,
+            )]
                 : [],
           ),
           child: Row(
@@ -2403,10 +2279,9 @@ class HomePageState extends State<HomePage> {
               border: Border.all(color: const Color(0xFF3A4F65)),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.3),
-                  blurRadius: 8,
-                  offset: const Offset(0, 4),
-                ),
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 8,
+                    offset: const Offset(0, 4)),
               ],
             ),
             child: ListView.separated(
@@ -2427,8 +2302,8 @@ class HomePageState extends State<HomePage> {
                   },
                   borderRadius: BorderRadius.circular(10),
                   child: Padding(
-                    padding:
-                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 14, vertical: 10),
                     child: Row(
                       children: [
                         Icon(
@@ -2445,22 +2320,17 @@ class HomePageState extends State<HomePage> {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
-                                pred.primaryText ?? '',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                              if ((pred.secondaryText ?? '').isNotEmpty)
-                                Text(
-                                  pred.secondaryText ?? '',
+                              Text(pred.primaryText ?? '',
                                   style: const TextStyle(
-                                      color: Colors.white54, fontSize: 11),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.w600)),
+                              if ((pred.secondaryText ?? '').isNotEmpty)
+                                Text(pred.secondaryText ?? '',
+                                    style: const TextStyle(
+                                        color: Colors.white54, fontSize: 11),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis),
                             ],
                           ),
                         ),
@@ -2480,8 +2350,7 @@ class HomePageState extends State<HomePage> {
 
   Widget _mapPickerButton(String target) {
     return Container(
-      width: 34,
-      height: 34,
+      width: 34, height: 34,
       decoration: BoxDecoration(
         color: const Color(0xFF1E2A3A),
         borderRadius: BorderRadius.circular(10),
@@ -2502,8 +2371,7 @@ class HomePageState extends State<HomePage> {
 
   Widget _dot({required bool filled}) {
     return Container(
-      width: 20,
-      height: 20,
+      width: 20, height: 20,
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(color: Colors.white, width: 2.5),
@@ -2512,8 +2380,7 @@ class HomePageState extends State<HomePage> {
       child: filled
           ? Center(
         child: Container(
-          width: 8,
-          height: 8,
+          width: 8, height: 8,
           decoration: const BoxDecoration(
               color: Color(0xFF2A3A4E), shape: BoxShape.circle),
         ),
@@ -2526,8 +2393,7 @@ class HomePageState extends State<HomePage> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 34,
-        height: 34,
+        width: 34, height: 34,
         decoration: BoxDecoration(color: bgColor, shape: BoxShape.circle),
         child: Icon(icon, color: Colors.white, size: 17),
       ),
@@ -2541,17 +2407,15 @@ class HomePageState extends State<HomePage> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.symmetric(vertical: 4),
-        width: 46,
-        height: 46,
+        width: 46, height: 46,
         decoration: BoxDecoration(
           color: selected ? Colors.white : const Color(0xFF1E2A3A),
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 6,
-              offset: const Offset(0, 2),
-            ),
+                color: Colors.black.withOpacity(0.3),
+                blurRadius: 6,
+                offset: const Offset(0, 2)),
           ],
         ),
         child: Center(
@@ -2601,14 +2465,11 @@ class HomePageState extends State<HomePage> {
     );
   }
 
-
   Widget _closeButton({required VoidCallback onTap}) => GestureDetector(
     onTap: onTap,
     child: Container(
-      width: 30,
-      height: 30,
-      decoration:
-      BoxDecoration(color: Colors.grey.shade600, shape: BoxShape.circle),
+      width: 30, height: 30,
+      decoration: BoxDecoration(color: Colors.grey.shade600, shape: BoxShape.circle),
       child: const Icon(Icons.close, color: Colors.white, size: 16),
     ),
   );
@@ -2709,8 +2570,7 @@ class HomePageState extends State<HomePage> {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          width: 34,
-          height: 34,
+          width: 34, height: 34,
           decoration: BoxDecoration(
             color: isClose
                 ? const Color(0xFFE57373).withOpacity(0.85)
@@ -2785,8 +2645,7 @@ class _OriginalBottomSheetState extends State<_OriginalBottomSheet> {
             children: [
               Center(
                 child: Container(
-                  width: 38,
-                  height: 4,
+                  width: 38, height: 4,
                   decoration: BoxDecoration(
                       color: Colors.white24,
                       borderRadius: BorderRadius.circular(2)),
@@ -2814,8 +2673,8 @@ class _OriginalBottomSheetState extends State<_OriginalBottomSheet> {
                     shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(23)),
                   ),
-                  child: const Text('Get Line',
-                      style: TextStyle(
+                  child: Text('get_line'.tr(),
+                      style: const TextStyle(
                           color: Color(0xFF2E3E4B),
                           fontWeight: FontWeight.w600)),
                 ),
@@ -2830,4 +2689,4 @@ class _OriginalBottomSheetState extends State<_OriginalBottomSheet> {
 
   Widget _iconBtn(IconData icon, Color color, VoidCallback onTap) =>
       IconButton(icon: Icon(icon, color: color, size: 24), onPressed: onTap);
-  }
+}

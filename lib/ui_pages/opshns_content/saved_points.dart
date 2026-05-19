@@ -52,8 +52,9 @@ class SavedPointsState extends State<SavedPoints> {
   }
 
   Future<void> _deletePoint(int index) async {
-    final uid      = FirebaseAuth.instance.currentUser!.uid;
-    final docRef   = FirebaseFirestore.instance.collection('Savepoint').doc(uid);
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final docRef =
+    FirebaseFirestore.instance.collection('Savepoint').doc(uid);
     final snapshot = await docRef.get();
     Map<String, dynamic> data =
     Map<String, dynamic>.from(snapshot.data() ?? {});
@@ -84,8 +85,11 @@ class SavedPointsState extends State<SavedPoints> {
 
     setState(() {
       pointSaved.removeAt(index);
-      if (_selectedIndex == index) _selectedIndex = -1;
-      else if (_selectedIndex > index) _selectedIndex--;
+      if (_selectedIndex == index) {
+        _selectedIndex = -1;
+      } else if (_selectedIndex > index) {
+        _selectedIndex--;
+      }
     });
   }
 
@@ -94,29 +98,34 @@ class SavedPointsState extends State<SavedPoints> {
       context: context,
       builder: (_) => AlertDialog(
         backgroundColor: const Color(0xFF1C2B3A),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'حذف النقطة',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        shape:
+        RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          'delete_point_title'.tr(),
+          style: const TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold),
         ),
         content: Text(
-          'هل تريد حذف "${pointSaved[index][0]}" من المحفوظة؟',
+          'delete_point_confirm'
+              .tr(args: [pointSaved[index][0], 'saved_label'.tr()]),
           style: const TextStyle(color: Colors.white70),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('إلغاء', style: TextStyle(color: Colors.white54)),
+            child: Text('cancel'.tr(),
+                style: const TextStyle(color: Colors.white54)),
           ),
           TextButton(
             onPressed: () async {
               Navigator.pop(context);
               await _deletePoint(index);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('تم الحذف من المحفوظة')),
+                SnackBar(content: Text('delete_success_saved'.tr())),
               );
             },
-            child: const Text('حذف', style: TextStyle(color: Colors.redAccent)),
+            child: Text('delete'.tr(),
+                style: const TextStyle(color: Colors.redAccent)),
           ),
         ],
       ),
@@ -129,17 +138,26 @@ class SavedPointsState extends State<SavedPoints> {
     }
   }
 
+  // ── Top Bar ──
   Widget _buildTopBar() {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: Image.asset(
-              'assets/images/ChatGPT_Image_Feb_13__2026__02_39_29_PM-removebg-preview 2.png',
-              fit: BoxFit.contain,
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E3E4B).withOpacity(0.85),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -155,11 +173,12 @@ class SavedPointsState extends State<SavedPoints> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: TextField(
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      style:
+                      const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Choose your destination',
-                        hintStyle:
-                        TextStyle(color: Colors.white, fontSize: 13),
+                        hintText: 'choose_destination'.tr(),
+                        hintStyle: const TextStyle(
+                            color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -180,8 +199,9 @@ class SavedPointsState extends State<SavedPoints> {
     );
   }
 
+  // ── Saved Card ──
   Widget _buildSavedCard(List<String> line, int index) {
-    final name       = line[0];
+    final name = line[0];
     final isSelected = _selectedIndex == index;
 
     return Dismissible(
@@ -194,7 +214,8 @@ class SavedPointsState extends State<SavedPoints> {
           color: Colors.redAccent.withOpacity(0.85),
           borderRadius: BorderRadius.circular(14),
         ),
-        child: const Icon(Icons.delete_outline, color: Colors.white, size: 28),
+        child:
+        const Icon(Icons.delete_outline, color: Colors.white, size: 28),
       ),
       confirmDismiss: (_) async {
         bool confirmed = false;
@@ -202,15 +223,16 @@ class SavedPointsState extends State<SavedPoints> {
           context: context,
           builder: (_) => AlertDialog(
             backgroundColor: const Color(0xFF1C2B3A),
-            shape:
-            RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            title: const Text(
-              'حذف النقطة',
-              style:
-              TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
+            title: Text(
+              'delete_point_title'.tr(),
+              style: const TextStyle(
+                  color: Colors.white, fontWeight: FontWeight.bold),
             ),
             content: Text(
-              'هل تريد حذف "$name" من المحفوظة؟',
+              'delete_point_confirm'
+                  .tr(args: [name, 'saved_label'.tr()]),
               style: const TextStyle(color: Colors.white70),
             ),
             actions: [
@@ -219,16 +241,16 @@ class SavedPointsState extends State<SavedPoints> {
                   confirmed = false;
                   Navigator.pop(context);
                 },
-                child: const Text('إلغاء',
-                    style: TextStyle(color: Colors.white54)),
+                child: Text('cancel'.tr(),
+                    style: const TextStyle(color: Colors.white54)),
               ),
               TextButton(
                 onPressed: () {
                   confirmed = true;
                   Navigator.pop(context);
                 },
-                child: const Text('حذف',
-                    style: TextStyle(color: Colors.redAccent)),
+                child: Text('delete'.tr(),
+                    style: const TextStyle(color: Colors.redAccent)),
               ),
             ],
           ),
@@ -238,21 +260,27 @@ class SavedPointsState extends State<SavedPoints> {
       onDismissed: (_) async {
         await _deletePoint(index);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('تم حذف "$name" من المحفوظة')),
+          SnackBar(
+            content: Text(
+                'delete_success_named'.tr(args: [name, 'saved_label'.tr()])),
+          ),
         );
       },
       child: GestureDetector(
         onTap: () {
           setState(() => _selectedIndex = index);
           final lat =
-              double.tryParse(line[1].toString().replaceAll(',', '.')) ?? 0.0;
+              double.tryParse(line[1].toString().replaceAll(',', '.')) ??
+                  0.0;
           final lng =
-              double.tryParse(line[2].toString().replaceAll(',', '.')) ?? 0.0;
+              double.tryParse(line[2].toString().replaceAll(',', '.')) ??
+                  0.0;
           _toMap(lat, lng, name);
           if (Navigator.canPop(context)) Navigator.pop(context);
         },
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          padding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           decoration: BoxDecoration(
             color: const Color(0xFFBECFDF).withOpacity(0.5),
             borderRadius: BorderRadius.circular(14),
@@ -282,12 +310,13 @@ class SavedPointsState extends State<SavedPoints> {
               GestureDetector(
                 onTap: () => _confirmDelete(index),
                 child: Container(
-                  width: 32, height: 32,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
                     color: Colors.redAccent.withOpacity(0.2),
                     shape: BoxShape.circle,
-                    border:
-                    Border.all(color: Colors.redAccent.withOpacity(0.5)),
+                    border: Border.all(
+                        color: Colors.redAccent.withOpacity(0.5)),
                   ),
                   child: const Icon(Icons.delete_outline,
                       color: Colors.redAccent, size: 17),
@@ -300,7 +329,7 @@ class SavedPointsState extends State<SavedPoints> {
     );
   }
 
-  // ── واجهة فارغة ──
+  // ── Empty State ──
   Widget _buildEmptyState() {
     return Center(
       child: Column(
@@ -313,7 +342,7 @@ class SavedPointsState extends State<SavedPoints> {
           ),
           const SizedBox(height: 16),
           Text(
-            'لا توجد نقاط محفوظة',
+            'no_saved_points'.tr(),
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
@@ -322,7 +351,7 @@ class SavedPointsState extends State<SavedPoints> {
           ),
           const SizedBox(height: 8),
           Text(
-            'يمكنك حفظ مواقعك المفضلة من الخريطة',
+            'no_saved_points_desc'.tr(),
             style: TextStyle(
               fontSize: 13,
               color: Colors.white.withOpacity(0.4),
@@ -363,17 +392,20 @@ class SavedPointsState extends State<SavedPoints> {
                 Expanded(
                   child: _isLoading
                       ? const Center(
-                    child: CircularProgressIndicator(color: Colors.white),
+                    child:
+                    CircularProgressIndicator(color: Colors.white),
                   )
                       : pointSaved.isEmpty
                       ? _buildEmptyState()
                       : ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16),
                     itemCount: pointSaved.length,
                     separatorBuilder: (_, __) =>
                     const SizedBox(height: 10),
                     itemBuilder: (context, index) {
-                      return _buildSavedCard(pointSaved[index], index);
+                      return _buildSavedCard(
+                          pointSaved[index], index);
                     },
                   ),
                 ),
