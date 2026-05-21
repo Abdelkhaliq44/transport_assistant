@@ -290,6 +290,7 @@ class _SignUpState extends State<SignUp> {
           icon: Icon(
               obscure ? Icons.visibility_off : Icons.visibility),
           onPressed: onToggle,
+          color:  Color(0xFF1C2B4A),
         ),
       ),
     );

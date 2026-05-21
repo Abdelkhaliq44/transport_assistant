@@ -349,7 +349,7 @@ class _SignInState extends State<SignIn> {
             _obscurePassword
                 ? Icons.visibility_off_outlined
                 : Icons.visibility_outlined,
-            color: Colors.grey.shade400,
+            color: Color(0xFF1C2B4A),
             size: 20,
           ),
           onPressed: () =>

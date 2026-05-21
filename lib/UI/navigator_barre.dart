@@ -56,16 +56,27 @@ class _MainScreenState extends State<MainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+
       body: IndexedStack(
         index: _selectedIndex,
         children: _pages,
       ),
-      bottomNavigationBar: _buildBottomNav(),
+
+      // ───────── Bottom Navigation ─────────
+      bottomNavigationBar: SafeArea(
+        minimum: const EdgeInsets.only(bottom: 6),
+        child: _buildBottomNav(),
+      ),
     );
   }
 
   Widget _buildBottomNav() {
+
+    final width  = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
+
     final items = [
+
       _NavItem(
         icon: Icons.map_outlined,
         label: 'path'.tr(),
@@ -82,35 +93,48 @@ class _MainScreenState extends State<MainScreen> {
       ),
     ];
 
-    return Container(
+    return AnimatedContainer(
+
+      duration: const Duration(milliseconds: 200),
+
       decoration: BoxDecoration(
+
         color: const Color(0xFF1E2A3A).withOpacity(0.97),
+
         border: const Border(
           top: BorderSide(
             color: Color(0xFF2E3D52),
             width: 1,
           ),
         ),
+
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.3),
-            blurRadius: 10,
+            color: Colors.black.withOpacity(0.25),
+            blurRadius: width * 0.03,
             offset: const Offset(0, -2),
           ),
         ],
       ),
 
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: EdgeInsets.only(
+        top: height * 0.012,
+        bottom: height * 0.012,
+        left: width * 0.03,
+        right: width * 0.03,
+      ),
 
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
 
         children: List.generate(items.length, (i) {
+
           final selected = i == _selectedIndex;
 
           return GestureDetector(
+
             onTap: () {
-              // عند الضغط على Path ترجع الصفحة لحالتها الأصلية
+
               if (i == 0) {
                 _pathKey.currentState?.resetPage();
               }
@@ -122,9 +146,13 @@ class _MainScreenState extends State<MainScreen> {
               mainAxisSize: MainAxisSize.min,
 
               children: [
-                Container(
-                  width: 44,
-                  height: 44,
+
+                AnimatedContainer(
+
+                  duration: const Duration(milliseconds: 200),
+
+                  width: width * 0.11,
+                  height: width * 0.11,
 
                   decoration: selected
                       ? const BoxDecoration(
@@ -135,21 +163,28 @@ class _MainScreenState extends State<MainScreen> {
 
                   child: Icon(
                     items[i].icon,
-                    color:
-                    selected ? Colors.white : Colors.grey.shade500,
-                    size: 22,
+
+                    color: selected
+                        ? Colors.white
+                        : Colors.grey.shade500,
+
+                    size: width * 0.055,
                   ),
                 ),
 
-                const SizedBox(height: 2),
+                SizedBox(height: height * 0.004),
 
                 Text(
                   items[i].label,
 
                   style: TextStyle(
-                    fontSize: 11,
-                    color:
-                    selected ? Colors.white : Colors.grey.shade500,
+
+                    fontSize: width * 0.028,
+
+                    color: selected
+                        ? Colors.white
+                        : Colors.grey.shade500,
+
                     fontWeight: selected
                         ? FontWeight.w600
                         : FontWeight.normal,

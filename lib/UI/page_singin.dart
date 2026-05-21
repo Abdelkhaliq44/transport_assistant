@@ -278,9 +278,10 @@ class _LoginScreenState extends State<LoginScreen> {
           borderSide: const BorderSide(color: Color(0xFF1C2B4A), width: 1.5),
         ),
         suffixIcon: IconButton(
+          color:  Color(0xFF1C2B4A),
           icon: Icon(
             _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-            color: Colors.grey.shade400,
+            color:  Color(0xFF1C2B4A),
             size: 20,
           ),
           onPressed: () {

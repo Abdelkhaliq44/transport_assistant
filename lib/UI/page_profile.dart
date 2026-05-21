@@ -95,70 +95,120 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // ═══════════════════════════════════════════════════════════════════════
   @override
   Widget build(BuildContext context) {
+
+    final size = MediaQuery.of(context).size;
+    final width = size.width;
+    final height = size.height;
+
     return Scaffold(
       body: Stack(
         children: [
+
+          // ───────── الخلفية ─────────
           SizedBox.expand(
             child: Image.asset(
               'assets/images/photo_2026-05-02_15-51-19.jpg',
               fit: BoxFit.cover,
             ),
           ),
-          Container(color: Colors.black.withOpacity(0.25)),
-          Positioned(
-            right: 147,
-            top: 90,
-            child: CircleAvatar(
-              radius: 65,
-              backgroundColor: const Color(0xFFBECFDF),
-              backgroundImage: _imgPath != null
-                  ? CachedNetworkImageProvider(_imgPath!) as ImageProvider
-                  : null,
-              child: _imgPath == null
-                  ? const Icon(Icons.person, size: 90, color: Color(0xFF1F2E3B))
-                  : null,
-            ),
+
+          Container(
+            color: Colors.black.withOpacity(0.25),
           ),
-          Positioned(
-            right: 155,
-            top: 190,
-            child: GestureDetector(
-              onTap: _isLoggedIn ? _pickAndUploadImage : null,
-              child: CircleAvatar(
-                radius: 10,
-                backgroundColor: Colors.white,
-                child: Icon(
-                  Icons.add,
-                  size: 18,
-                  color: _isLoggedIn ? const Color(0xFF1F2E3B) : Colors.grey,
+
+          // ───────── صورة البروفايل ─────────
+          Align(
+            alignment: const Alignment(0, -0.75),
+            child: Stack(
+              children: [
+
+                CircleAvatar(
+                  radius: width * 0.15,
+                  backgroundColor: const Color(0xFFBECFDF),
+
+                  backgroundImage: _imgPath != null
+                      ? CachedNetworkImageProvider(_imgPath!)
+                      : null,
+
+                  child: _imgPath == null
+                      ? Icon(
+                    Icons.person,
+                    size: width * 0.18,
+                    color: const Color(0xFF1F2E3B),
+                  )
+                      : null,
                 ),
-              ),
+
+                Positioned(
+                  right: 0,
+                  bottom: 0,
+                  child: GestureDetector(
+                    onTap: _isLoggedIn ? _pickAndUploadImage : null,
+                    child: CircleAvatar(
+                      radius: width * 0.035,
+                      backgroundColor: Colors.white,
+                      child: Icon(
+                        Icons.add,
+                        size: width * 0.045,
+                        color: _isLoggedIn
+                            ? const Color(0xFF1F2E3B)
+                            : Colors.grey,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.only(top: 190.0),
+
+          // ───────── المحتوى ─────────
+          SafeArea(
             child: Column(
               children: [
+
+                SizedBox(height: height * 0.24),
+
+                // الاسم والايميل
                 Column(
                   children: [
-                    const SizedBox(height: 60),
+
                     Text(
-                      _isLoggedIn ? (_name ?? 'no_name'.tr()) : 'guest'.tr(),
-                      style: const TextStyle(
+                      _isLoggedIn
+                          ? (_name ?? 'no_name'.tr())
+                          : 'guest'.tr(),
+
+                      style: TextStyle(
                         color: Colors.white,
-                        fontSize: 18,
+                        fontSize: width * 0.05,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+
+                    SizedBox(height: height * 0.005),
+
                     Text(
-                      _isLoggedIn ? (_email ?? '') : 'not_signed_in'.tr(),
-                      style: const TextStyle(color: Colors.white70),
+                      _isLoggedIn
+                          ? (_email ?? '')
+                          : 'not_signed_in'.tr(),
+
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: width * 0.035,
+                      ),
                     ),
                   ],
                 ),
+
+                SizedBox(height: height * 0.02),
+
+                // المحتوى
                 Expanded(
                   child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: width * 0.06,
+                      vertical: height * 0.01,
+                    ),
+
                     child: _isLoggedIn
                         ? _buildLoggedInContent()
                         : _buildLoggedOutContent(),
