@@ -114,29 +114,39 @@
   "picker_tap_end": "اضغط على نقطة الوصول",
   "picker_btn_choose": "اختر مكاناً من الخريطة",
   "picker_btn_confirm": "تأكيد الاختيار",
-
-    "path": "المسار",
-    "map": "الخريطة",
-    "profile": "الملف الشخصي",
-
-
-    "back": "رجوع",
-
-
-  "taxi": {
-    "title": "خطوط التاكسي",
-    "search_hint": "اختر وجهتك",
-    "ain_mlila": "تاكسي عين مليلة",
-    "ain_mlila_address": "توفيل، سونلغاز"
-  },
-  "teleferik": {
-    "title": "خط التيليفيريك",
-    "name": "تيليفيريك",
-    "address": "حديقة التجارب، نصب الشهداء"
-  },
-  "train": {
-    "title": "خطوط القطار",
-    "name": "قطار الجزائر",
-    "address": "ساحة الشهداء، زرالدة / بوفاريك / رغاية"
-  }
+  "path": "المسار",
+  "map": "الخريطة",
+  "profile": "الملف الشخصي",
+  "back": "رجوع",
+  "train_lines": "خطوط القطار",
+  "train_algiers": "قطار الجزائر",
+  "train_algiers_address": "ساحة الشهداء، زرالدة / بوفاريك / رغاية",
+  "tram_lines": "خطوط الترام",
+  "tram_address": "درقانة، الرويسو",
+  "teleferik_lines": "خطوط التيليفيريك",
+  "teleferik_name": "تيليفيريك الجزائر",
+  "teleferik_address": "عين البنيان، باب الواد",
+  "taxi_lines": "خطوط التاكسي",
+  "taxi_ain_mlila": "تاكسي عين مليلة",
+  "taxi_ain_mlila_address": "عين مليلة، قسنطينة",
+  "bus_lines": "خطوط الحافلات",
+  "bus_L608A": "L608A",
+  "bus_L608A_address": "درقانة، الحراش",
+  "bus_L58": "L58",
+  "bus_L58_address": "ساحة الشهداء، شوفالي",
+  "bus_L12": "L12",
+  "bus_L12_address": "سطاوالي، ساحة الشهداء",
+  "bus_L36": "L36",
+  "bus_L36_address": "بوزريعة، باستا علي",
+  "bus_L89A": "L89A",
+  "bus_L89A_address": "القبة، ساحة فاتح مايو",
+  "metro_lines": "خطوط المترو",
+  "metro_address": "ساحة الشهداء، الحراش / عين نعجة",
+  "metro": " المترو",
+  "account": "حساب",
+  "sign_in_to_see_favorites": "سجّل دخولك لحفظ أماكنك المفضلة",
+  "sign_in_to_see_saved": "سجّل دخولك لعرض نقاطك المحفوظة",
+  "sign_in_to_see_history": "سجّل دخولك لعرض سجل تنقلاتك",
+  "sign_in": "تسجيل الدخول",
+  "connect_as_guest": "المتابعة كزائر"
 }

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'about.dart';
+import 'navigator_barre.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final bool seenOnboarding;
+  const SplashScreen({super.key, required this.seenOnboarding});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -14,39 +16,35 @@ class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
   late AnimationController _logoController;
   late AnimationController _shimmerController;
-  late AnimationController _pulseController; // ← للـ pulse المستمر
+  late AnimationController _pulseController;
 
   late Animation<double> _fadeIn;
   late Animation<double> _scaleIntro;
   late Animation<double> _slideUp;
   late Animation<double> _shimmerAnim;
-  late Animation<double> _pulseScale; // ← يكبر ويصغر باستمرار
-  late Animation<double> _glowAnim;   // ← الهالة مع الـ pulse
+  late Animation<double> _pulseScale;
+  late Animation<double> _glowAnim;
 
   @override
   void initState() {
     super.initState();
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
 
-    // ── 1. Intro: يظهر اللوغو لأول مرة ──
     _logoController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1800),
     );
 
-    // ── 2. Shimmer يمر باستمرار ──
     _shimmerController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 2000),
     );
 
-    // ── 3. Pulse: يكبر ويصغر بلا توقف ──
     _pulseController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 1600),
     );
 
-    // ── Fade In ──
     _fadeIn = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(
         parent: _logoController,
@@ -54,7 +52,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // ── Slide Up ──
     _slideUp = Tween<double>(begin: 50.0, end: 0.0).animate(
       CurvedAnimation(
         parent: _logoController,
@@ -62,7 +59,6 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     );
 
-    // ── Scale bounce عند الدخول فقط ──
     _scaleIntro = TweenSequence<double>([
       TweenSequenceItem(
         tween: Tween(begin: 0.55, end: 1.06)
@@ -81,41 +77,47 @@ class _SplashScreenState extends State<SplashScreen>
       ),
     ]).animate(_logoController);
 
-    // ── Pulse scale: 1.0 → 1.08 → 1.0 بلا توقف ──
     _pulseScale = Tween<double>(begin: 1.0, end: 1.08).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // ── Glow يتبع الـ pulse ──
     _glowAnim = Tween<double>(begin: 0.3, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    // ── Shimmer sweep ──
     _shimmerAnim = Tween<double>(begin: -1.5, end: 2.5).animate(
       CurvedAnimation(parent: _shimmerController, curve: Curves.easeInOut),
     );
 
-    // ── تشغيل بالترتيب ──
-// شغّلهم مباشرة
     _pulseController.repeat(reverse: true);
     _shimmerController.repeat(
       period: const Duration(milliseconds: 2400),
     );
 
-// ومن بعد intro وحدو
     _logoController.forward();
-    Future.delayed(const Duration(milliseconds: 3600), () {
+
+    Future.delayed(const Duration(milliseconds: 3600), () async {
       if (mounted) {
         SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) => OnboardingScreen(
 
+        if (widget.seenOnboarding) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => MainScreen(
+                isDark: false,
+                onThemeChanged: (_) {},
+              ),
             ),
-          ),
-        );
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const OnboardingScreen(),
+            ),
+          );
+        }
       }
     });
   }
@@ -158,13 +160,12 @@ class _SplashScreenState extends State<SplashScreen>
             ),
           ),
 
-          // ── 3. Glow + Logo معاً يتنفسان ──
+          // ── 3. Glow + Logo ──
           Center(
             child: AnimatedBuilder(
-              animation: Listenable.merge([_logoController, _pulseController]),
+              animation:
+              Listenable.merge([_logoController, _pulseController]),
               builder: (_, child) {
-                // الـ scale الكلي = intro scale × pulse scale
-                // بعد انتهاء الـ intro، _scaleIntro = 1.0 دائماً
                 final totalScale = _scaleIntro.value * _pulseScale.value;
 
                 return FadeTransition(
@@ -176,7 +177,7 @@ class _SplashScreenState extends State<SplashScreen>
                       child: Stack(
                         alignment: Alignment.center,
                         children: [
-                          // ── Glow الخارجي الكبير ──
+                          // ── Glow الخارجي ──
                           Container(
                             width: size.width * 0.90,
                             height: size.width * 0.90,
@@ -193,7 +194,7 @@ class _SplashScreenState extends State<SplashScreen>
                             ),
                           ),
 
-                          // ── Glow الداخلي الناعم ──
+                          // ── Glow الداخلي ──
                           Container(
                             width: size.width * 0.55,
                             height: size.width * 0.55,

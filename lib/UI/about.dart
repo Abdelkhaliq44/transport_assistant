@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
 import 'navigator_barre.dart';
 
 // ── بيانات الشرائح ───────────────────────────
@@ -44,12 +44,6 @@ const List<OnboardingPage> pages = [
   ),
 ];
 
-// ─────────────────────────────────────────────
-void main() => runApp(const MaterialApp(
-  debugShowCheckedModeBanner: false,
-  home: OnboardingScreen(),
-));
-
 // ── الشاشة الرئيسية ──────────────────────────
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -60,22 +54,19 @@ class OnboardingScreen extends StatefulWidget {
 
 class _OnboardingScreenState extends State<OnboardingScreen>
     with TickerProviderStateMixin {
-  int _displayedIndex = 0; // الصورة/النص المعروض
-  int _currentIndex = 0;   // النقاط والأزرار
+  int _displayedIndex = 0;
+  int _currentIndex = 0;
   bool _isAnimating = false;
 
-  // ── Vehicle animations ──
   late AnimationController _vehicleCtrl;
   late Animation<Offset>   _vehicleSlide;
   late Animation<double>   _vehicleFade;
   late Animation<double>   _vehicleScale;
 
-  // ── Text animations ──
   late AnimationController _textCtrl;
   late Animation<Offset>   _textSlide;
   late Animation<double>   _textFade;
 
-  // ── Float loop ──
   late AnimationController _floatCtrl;
   late Animation<double>   _floatAnim;
 
@@ -148,7 +139,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     if (_currentIndex < pages.length - 1) {
       _goToPage(_currentIndex + 1);
     } else {
-      debugPrint('Onboarding finished!');
+      _finishOnboarding();
     }
   }
 
@@ -158,7 +149,22 @@ class _OnboardingScreenState extends State<OnboardingScreen>
     }
   }
 
-  void _skip() => debugPrint('Skipped');
+  // ── حفظ أن المستخدم شاهد الـ onboarding والانتقال ──
+  Future<void> _finishOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('seen_onboarding', true);
+    if (mounted) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (context) => MainScreen(
+            isDark: false,
+            onThemeChanged: (_) {},
+          ),
+        ),
+      );
+    }
+  }
 
   @override
   void dispose() {
@@ -202,7 +208,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             ),
           ),
 
-          // ── Skip – أعلى اليمين ──
+          // ── Skip ──
           Positioned(
             top: 52,
             right: 24,
@@ -210,20 +216,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               opacity: isLast ? 0 : 1,
               duration: const Duration(milliseconds: 300),
               child: TextButton(
-                onPressed: isLast
-                    ? null
-                    : () {
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => MainScreen(
-                        isDark: false,
-                        onThemeChanged: (_) {},
-                      ),
-                    ),
-                  );
-                },
-
+                onPressed: isLast ? null : _finishOnboarding,
                 style: TextButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 16,
@@ -234,7 +227,6 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                     borderRadius: BorderRadius.circular(20),
                   ),
                 ),
-
                 child: const Text(
                   'Skip',
                   style: TextStyle(
@@ -326,6 +318,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
               onBack: _back,
               onNext: _next,
               onDotTap: _goToPage,
+              onFinish: _finishOnboarding,
             ),
           ),
         ],
@@ -343,6 +336,7 @@ class _BottomBar extends StatelessWidget {
   final VoidCallback onBack;
   final VoidCallback onNext;
   final ValueChanged<int> onDotTap;
+  final VoidCallback onFinish; // ← جديد
 
   const _BottomBar({
     required this.currentIndex,
@@ -352,6 +346,7 @@ class _BottomBar extends StatelessWidget {
     required this.onBack,
     required this.onNext,
     required this.onDotTap,
+    required this.onFinish,
   });
 
   @override
@@ -384,11 +379,10 @@ class _BottomBar extends StatelessWidget {
           ),
           const SizedBox(height: 20),
 
-          // ── Back  ◄──────────────────►  Next ──
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Back – يختفي في الصفحة الأولى
+              // Back
               AnimatedOpacity(
                 opacity: isFirst ? 0 : 1,
                 duration: const Duration(milliseconds: 300),
@@ -416,45 +410,23 @@ class _BottomBar extends StatelessWidget {
                 duration: const Duration(milliseconds: 300),
                 transitionBuilder: (child, anim) =>
                     ScaleTransition(scale: anim, child: child),
-
                 child: ElevatedButton(
                   key: ValueKey(isLast),
-
-                  onPressed: () {
-                    if (isLast) {
-                      Navigator.pushReplacement(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => MainScreen(
-                            isDark: false,
-                            onThemeChanged: (_) {},
-                          ),
-                        ),
-                      );
-                    } else {
-                      onNext();
-                    }
-                  },
-
+                  onPressed: isLast ? onFinish : onNext, // ← يستخدم onFinish
                   style: ElevatedButton.styleFrom(
                     backgroundColor: isLast
                         ? const Color(0xFF1976D2)
                         : const Color(0xFF2C4A6E),
-
                     foregroundColor: Colors.white,
-
                     padding: const EdgeInsets.symmetric(
                       horizontal: 40,
                       vertical: 14,
                     ),
-
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30),
                     ),
-
                     elevation: 0,
                   ),
-
                   child: Text(
                     isLast ? 'Get Started' : 'Next',
                     style: const TextStyle(

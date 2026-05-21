@@ -52,6 +52,18 @@ class _SignInState extends State<SignIn> {
     });
   }
 
+  void _handleGuestLogin() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MainScreen(
+          isDark: false,
+          onThemeChanged: (val) {},
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -167,7 +179,37 @@ class _SignInState extends State<SignIn> {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
+
+                    // ── Connect as Guest ──
+                    GestureDetector(
+                      onTap: _handleGuestLogin,
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 6, bottom: 4),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(
+                              Icons.person_outline,
+                              size: 15,
+                              color: Color(0xFF1C2B4A),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              'connect_as_guest'.tr(),
+                              style: const TextStyle(
+                                fontSize: 13,
+                                color: Color(0xFF1C2B4A),
+                                fontWeight: FontWeight.w500,
+                                decoration: TextDecoration.underline,
+                                decorationColor: Color(0xFF1C2B4A),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
 
                     // OR divider
                     Row(

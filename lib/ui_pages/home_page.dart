@@ -16,7 +16,7 @@ import 'package:transport_assistant/lines_etusa/line_metro.dart';
 import 'package:transport_assistant/lines_etusa/line_tram.dart';
 import 'package:transport_assistant/lines_etusa/sahetchohada_chevally_NL58.dart';
 import 'package:transport_assistant/lines_etusa/staoueli_sahetchouhada_NL12.dart';
-import 'package:transport_assistant/lines_etusa/tren.dart';
+//import 'package:transport_assistant/lines_etusa/tren.dart';
 import 'package:transport_assistant/marker/L36_station.dart';
 import 'package:transport_assistant/marker/metro.dart';
 import 'package:transport_assistant/marker/stastion_L89.dart';
@@ -25,12 +25,12 @@ import 'package:transport_assistant/marker/station_NL58.dart';
 import 'package:transport_assistant/marker/station_NL608.dart';
 import 'package:transport_assistant/marker/tram.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:transport_assistant/marker/tran.dart';
+//import 'package:transport_assistant/marker/tran.dart';
 import 'package:transport_assistant/ui_pages/opshns_content/saved_points.dart';
 import 'dart:async';
 import '../Data/favorite_points.dart';
 import 'package:flutter_map/flutter_map.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' hide Path;
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:transport_assistant/UI/favorites_point.dart';
@@ -65,9 +65,27 @@ class RouteRequest {
     "document": document,
   };
 }
+class _TrianglePainter extends CustomPainter {
+  final Color color;
+  _TrianglePainter({required this.color});
 
-double lastLat = 36.021284;
-double lastLng = 6.567206;
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()..color = color;
+    final path = Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_TrianglePainter old) => old.color != color;
+}
+
+double lastLat = 36.7845876;
+double lastLng = 3.0572862;
 
 class LineSelectionRequest {
   double? lat1, long1, lat2, long2;
@@ -113,11 +131,13 @@ class HomePageState extends State<HomePage> {
   Future<void> loadLineByName(String lineName) async {
     routeRequest.document = lineName;
     await loadRoute(lineName);
-    if (routePoints.isNotEmpty) {
-      _mapController.move(routePoints.first, 14);
+    if (trainPoints.isNotEmpty) {
+      _mapController.move(trainPoints.first, 14);
     }
   }
-
+// Agent response data
+  List<LatLng> agentRoutePoints = [];
+  List<Marker> agentMarkers = [];
   final TextEditingController _searchController = TextEditingController();
   List<Places.AutocompletePrediction> _searchPredictions = [];
   List<Places.AutocompletePrediction> _startPredictions = [];
@@ -160,7 +180,7 @@ class HomePageState extends State<HomePage> {
 
   final MapController _mapController = MapController();
 
-  List<LatLng> routePoints = [];
+  List<LatLng> trainPoints = [];
   List<LatLng> L36 = [];
   List<LatLng> L58 = [];
   List<LatLng> L89 = [];
@@ -180,7 +200,7 @@ class HomePageState extends State<HomePage> {
   List<Marker> L36Markers = [];
   List<Marker> L89Markers = [];
   List<Marker> L12Markers = [];
-  List<Marker> tranMarkers = [];
+  List<Marker> trainMarkers= [];
   List<Marker> teleferikMarkers = [];
   List<Marker> _Markers = [];
 
@@ -191,7 +211,7 @@ class HomePageState extends State<HomePage> {
   String selectedTime = "medium";
   String selectedComfort = "low";
   LineSelectionRequest lineSelectionRequest = LineSelectionRequest();
-
+  String? _selectedLineName;
   String? imgpathe;
 
   bool get start => _activeField == 'start';
@@ -214,6 +234,11 @@ class HomePageState extends State<HomePage> {
           _startPredictions = [];
           _activeField = null;
         });
+
+        // ── إرسال للـ agent إذا تم تحديد كلا النقطتين ──
+        if (routeRequest.lat2 != null && routeRequest.long2 != null) {
+          await sendData(routeRequest);
+        }
       }
     } catch (e) {
       _snack('error_select_start'.tr());
@@ -237,6 +262,11 @@ class HomePageState extends State<HomePage> {
           _endPredictions = [];
           _activeField = null;
         });
+
+        // ── إرسال للـ agent إذا تم تحديد كلا النقطتين ──
+        if (routeRequest.lat1 != null && routeRequest.long1 != null) {
+          await sendData(routeRequest);
+        }
       }
     } catch (e) {
       _snack('error_select_end'.tr());
@@ -263,7 +293,15 @@ class HomePageState extends State<HomePage> {
       return;
     }
     try {
-      final result = await places.findAutocompletePredictions(query);
+      final result = await places.findAutocompletePredictions(
+        query,
+        // ── تقييد البحث على الجزائر العاصمة ──
+        locationBias: Places.LatLngBounds(
+          southwest: Places.LatLng(lat: 36.60, lng: 2.90),
+          northeast: Places.LatLng(lat: 36.90, lng: 3.30),
+        ),
+        countries: ['DZ'],
+      );
       setState(() => _startPredictions = result.predictions);
     } catch (e) {
       print("Start search error: $e");
@@ -276,13 +314,36 @@ class HomePageState extends State<HomePage> {
       return;
     }
     try {
-      final result = await places.findAutocompletePredictions(query);
+      final result = await places.findAutocompletePredictions(
+        query,
+        // ── تقييد البحث على الجزائر العاصمة ──
+        locationBias: Places.LatLngBounds(
+          southwest: Places.LatLng(lat: 36.60, lng: 2.90),
+          northeast: Places.LatLng(lat: 36.90, lng: 3.30),
+        ),
+        countries: ['DZ'],
+      );
       setState(() => _endPredictions = result.predictions);
     } catch (e) {
       print("End search error: $e");
     }
   }
-
+  String _getTransportType(String? lineName) {
+    if (lineName == null) return 'bus';
+    switch (lineName) {
+      case 'taxi':                          return 'taxi';
+      case 'tram':                          return 'tram';
+      case 'metro':                         return 'metro';
+      case 'teleferik':                     return 'teleferik';
+      case 'train':                          return 'train';
+      case 'L12':
+      case 'L36':
+      case 'L58':
+      case 'L608A':
+      case 'L89A':                          return 'bus';
+      default:                              return 'bus';
+    }
+  }
   Future<void> _selectStartPlace(Places.AutocompletePrediction prediction) async {
     try {
       final detail = await places.fetchPlace(
@@ -391,12 +452,16 @@ class HomePageState extends State<HomePage> {
       ..cost = selectedCost
       ..time = selectedTime
       ..comfort = selectedComfort;
+    print("📦 البيانات المرسلة للـ agent:");
+    print(jsonEncode(lineSelectionRequest.toJson()));
     try {
       final response = await http.post(
-        Uri.parse("http://192.168.1.69:5001/select-lines"),
+        Uri.parse("https://agent-tr-2.onrender.com/select-lines"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode(lineSelectionRequest.toJson()),
       );
+      print("📩 status: ${response.statusCode}");
+      print("📩 response: ${response.body}");
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final routes = data['data']['routes'] as List;
@@ -452,22 +517,102 @@ class HomePageState extends State<HomePage> {
     } catch (_) {}
   }
 
-  Future sendData(RouteRequest req) async {
+  Future<void> sendData(RouteRequest req) async {
     final response = await http.post(
-      Uri.parse("http://192.168.1.69:5000/route"),
+      Uri.parse("https://agent-tr-2.onrender.com/route"),
       headers: {"Content-Type": "application/json"},
       body: jsonEncode(req.toJson()),
     );
     final data = jsonDecode(response.body);
-    final polylinePoints = getPolylinePoints(data);
-    final markerPoints = getmarkerlinePoints(data);
+
+    final List points = data['data']['full_route'];
+    final polyline = points
+        .map((p) => LatLng((p['lat'] as num).toDouble(), (p['lng'] as num).toDouble()))
+        .toList();
+
+    final boardingLat = (data['data']['boarding_station']['latitude']  as num).toDouble();
+    final boardingLng = (data['data']['boarding_station']['longitude'] as num).toDouble();
+    final dropoffLat  = (data['data']['dropoff_station']['latitude']   as num).toDouble();
+    final dropoffLng  = (data['data']['dropoff_station']['longitude']  as num).toDouble();
+
+    // ✅ حوّل اسم الخط إلى نوع وسيلة النقل
+    final transportType = _getTransportType(req.document);
+    final markerColor   = _getMarkerColor(transportType);
+    final markerIcon    = getIcon(transportType);
+
     setState(() {
-      routePoints = polylinePoints;
+      trainPoints = [];
+      L36 = []; L58 = []; L89 = []; L608 = [];
+      L12 = []; Tram = []; Metro = []; Teleferik = []; taxi = [];
+      L36Markers = []; L58Markers = []; L89Markers = [];
+      L608Markers = []; L12Markers = []; tramMarkers = [];
+      metroMarkers = []; teleferikMarkers = [];
+      taxiMarkers = []; busMarkers = []; trainMarkers = [];
+      _Markers = [];
+
+      agentRoutePoints = polyline;
+      agentMarkers = [
+        _buildAgentMarker(
+          LatLng(boardingLat, boardingLng),
+          markerColor,
+          markerIcon,
+          isBoarding: true,
+        ),
+        _buildAgentMarker(
+          LatLng(dropoffLat, dropoffLng),
+          markerColor,
+          markerIcon,
+          isBoarding: false,
+        ),
+      ];
     });
-    await buildMarkers('bus', markerPoints);
-    return polylinePoints;
+
+    _mapController.move(LatLng(boardingLat, boardingLng), 14);
   }
 
+// ── helper لبناء marker الـ agent ──────────────────────────────
+  Marker _buildAgentMarker(
+      LatLng point,
+      Color color,
+      Widget icon, {
+        required bool isBoarding,
+      }) {
+    return Marker(
+      point: point,
+      width: 50,
+      height: 60,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: isBoarding ? Colors.greenAccent : Colors.redAccent,
+                width: 2.5,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withOpacity(0.5),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(child: icon),
+          ),
+          // مثلث صغير في الأسفل
+          CustomPaint(
+            size: const Size(12, 7),
+            painter: _TrianglePainter(color: color),
+          ),
+        ],
+      ),
+    );
+  }
   // ── Firebase / Storage ──────────────────────────────────────────────────────
   loadUserImage() async {
     try {
@@ -483,10 +628,20 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<List<LatLng>> loadRouteFromFirebase(String routeName, String choice, String route) async {
-    final doc = await FirebaseFirestore.instance.collection(route).doc(routeName).get();
-    if (!doc.exists) return [];
-    final List data = doc[choice];
-    return data.map((e) => LatLng(e['lat'], e['lng'])).toList();
+    try {
+      final doc = await FirebaseFirestore.instance.collection(route).doc(routeName).get();
+      if (!doc.exists) return [];
+
+      // ✅ تحقق أن الـ field موجود قبل القراءة
+      final data = doc.data();
+      if (data == null || !data.containsKey(choice)) return [];
+
+      final List list = doc[choice];
+      return list.map((e) => LatLng(e['lat'], e['lng'])).toList();
+    } catch (e) {
+      print("❌ loadRouteFromFirebase error [$routeName/$choice]: $e");
+      return [];
+    }
   }
 
   Future<void> onSelectRoute(String lineName) async {
@@ -496,7 +651,7 @@ class HomePageState extends State<HomePage> {
       L36Markers = []; L58Markers = []; L89Markers = [];
       L608Markers = []; L12Markers = []; tramMarkers = [];
       metroMarkers = []; teleferikMarkers = [];
-      taxiMarkers = []; busMarkers = []; tranMarkers = [];
+      taxiMarkers = []; busMarkers = []; trainMarkers = [];
     });
 
     if (lineName == 'taxi') {
@@ -516,6 +671,7 @@ class HomePageState extends State<HomePage> {
         case 'L12':   L12 = routePoints; break;
         case 'tram':  Tram = routePoints; break;
         case 'metro': Metro = routePoints; break;
+        //case 'train': trainMarkers = routePoints; break;
         case 'teleferik': Teleferik = routePoints; break;
       }
     });
@@ -530,6 +686,7 @@ class HomePageState extends State<HomePage> {
   }
 
   Future<void> loadAllRoutes() async {
+    final markers = await loadRouteFromFirebase("train", 'marker', 'routes');
     await loadRoute('L36');
     await loadRoute('L58');
     await loadRoute('L89A');
@@ -539,37 +696,39 @@ class HomePageState extends State<HomePage> {
     await loadRoute('metro');
     await loadRoute('teleferik');
     await loadRoute('taxi');
-    await buildMarkers('tran', Tran_station);
+    await buildMarkers('train', markers);
   }
 
-  Future<void> loadRoute(String type) async {
+  Future<void> loadRoute(String type, {bool moveCamera = true}) async {
     final points = await loadRouteFromFirebase(type, 'points', 'routes');
     final markers = await loadRouteFromFirebase(type, 'marker', 'routes');
 
     setState(() {
       switch (type) {
-        case 'L36':   L36 = points; break;
-        case 'L58':   L58 = points; break;
-        case 'L89A':  L89 = points; break;
-        case 'L608A': L608 = points; break;
-        case 'L12':   L12 = points; break;
-        case 'tram':  Tram = points; break;
-        case 'metro': Metro = points; break;
+        case 'L36':       L36 = points; break;
+        case 'L58':       L58 = points; break;
+        case 'L89A':      L89 = points; break;
+        case 'L608A':     L608 = points; break;
+        case 'L12':       L12 = points; break;
+        case 'tram':      Tram = points; break;
+        case 'metro':     Metro = points; break;
         case 'teleferik': Teleferik = points; break;
-        case 'taxi':  taxi = points; break;
-        default:      routePoints = points; break;
+        case 'taxi':      taxi = points; break;
+        case 'train':      trainPoints = points; break;
+        default:          trainPoints = points; break;
       }
     });
 
     await buildMarkers(type, markers);
 
-    if (markers.isNotEmpty) {
-      _mapController.move(markers.first, 14);
-    } else if (points.isNotEmpty) {
-      _mapController.move(points.first, 14);
+    if (moveCamera) {
+      if (markers.isNotEmpty) {
+        _mapController.move(markers.first, 14);
+      } else if (points.isNotEmpty) {
+        _mapController.move(points.first, 14);
+      }
     }
   }
-
   Future<void> saveRouteToFirebase(String type, String choice, List<LatLng> points) async {
     final data = points.map((p) => {'lat': p.latitude, 'lng': p.longitude}).toList();
     await FirebaseFirestore.instance
@@ -607,7 +766,7 @@ class HomePageState extends State<HomePage> {
       if (type == "tram")     tramMarkers = temp;
       if (type == "metro")    metroMarkers = temp;
       if (type == "teleferik") teleferikMarkers = temp;
-      if (type == "tran")     tranMarkers = temp;
+      if (type == "train")     trainMarkers = temp;
       if (type == "L12")      L12Markers = temp;
       if (type == "L58")      L58Markers = temp;
       if (type == "L608A")    L608Markers = temp;
@@ -628,7 +787,7 @@ class HomePageState extends State<HomePage> {
       case "tram":      return const Color(0xFF6A1B9A);
       case "metro":     return const Color(0xFFBF360C);
       case "teleferik": return const Color(0xFF00695C);
-      case "tran":      return const Color(0xFFC62828);
+      case "train":      return const Color(0xFFC62828);
       default:          return const Color(0xFF37474F);
     }
   }
@@ -640,7 +799,7 @@ class HomePageState extends State<HomePage> {
       case "tram":      return const FaIcon(FontAwesomeIcons.trainTram,   color: Colors.white, size: 20);
       case "metro":     return const FaIcon(FontAwesomeIcons.train,       color: Colors.white, size: 20);
       case "teleferik": return const FaIcon(FontAwesomeIcons.cableCar,    color: Colors.white, size: 20);
-      case "tran":      return const FaIcon(FontAwesomeIcons.trainSubway, color: Colors.white, size: 20);
+      case "train":      return const FaIcon(FontAwesomeIcons.trainSubway, color: Colors.white, size: 20);
       case "L12":       return const FaIcon(FontAwesomeIcons.bus,         color: Colors.white, size: 20);
       case "L36":       return const FaIcon(FontAwesomeIcons.bus,         color: Colors.white, size: 20);
       case "L58":       return const FaIcon(FontAwesomeIcons.bus,         color: Colors.white, size: 20);
@@ -654,27 +813,80 @@ class HomePageState extends State<HomePage> {
   Future<void> _onTransportSelected(int index) async {
     setState(() {
       _selectedTransport = index;
+      agentRoutePoints = [];
+      agentMarkers = [];
       L36 = []; L58 = []; L89 = []; L608 = [];
       L12 = []; Tram = []; Metro = []; Teleferik = []; taxi = [];
       L36Markers = []; L58Markers = []; L89Markers = [];
       L608Markers = []; L12Markers = []; tramMarkers = [];
       metroMarkers = []; teleferikMarkers = [];
-      taxiMarkers = []; busMarkers = []; tranMarkers = [];
+      taxiMarkers = []; busMarkers = []; trainMarkers = [];
+      trainPoints = [];
+      _Markers = [];
     });
 
     switch (index) {
-      case 0: await loadRoute('taxi'); break;
-      case 1:
-        await loadRoute('L36');
-        await loadRoute('L58');
-        await loadRoute('L89A');
-        await loadRoute('L608A');
-        await loadRoute('L12');
+      case 0:
+        await loadRoute('taxi');
         break;
-      case 2: await loadRoute('tran');      break;
-      case 3: await loadRoute('tram');      break;
-      case 4: await loadRoute('metro');     break;
-      case 5: await loadRoute('teleferik'); break;
+
+      case 1:
+        await loadRoute('L36',   moveCamera: false);
+        await loadRoute('L58',   moveCamera: false);
+        await loadRoute('L89A',  moveCamera: false);
+        await loadRoute('L608A', moveCamera: false);
+        await loadRoute('L12',   moveCamera: false);
+
+        final firstPoints = L36.isNotEmpty ? L36
+            : L58.isNotEmpty ? L58
+            : L89.isNotEmpty ? L89
+            : L608.isNotEmpty ? L608
+            : L12.isNotEmpty ? L12
+            : <LatLng>[];
+
+        if (firstPoints.isNotEmpty) {
+          double minLat = firstPoints.map((p) => p.latitude).reduce((a, b) => a < b ? a : b);
+          double maxLat = firstPoints.map((p) => p.latitude).reduce((a, b) => a > b ? a : b);
+          double minLng = firstPoints.map((p) => p.longitude).reduce((a, b) => a < b ? a : b);
+          double maxLng = firstPoints.map((p) => p.longitude).reduce((a, b) => a > b ? a : b);
+
+          final bounds = LatLngBounds(
+            LatLng(minLat, minLng),
+            LatLng(maxLat, maxLng),
+          );
+
+          _mapController.fitCamera(
+            CameraFit.bounds(
+              bounds: bounds,
+              padding: const EdgeInsets.all(50),
+            ),
+          );
+        }
+        break;
+
+      case 2: // ── القطار ──
+        final points = await loadRouteFromFirebase('train', 'points', 'routes');
+        final markers = await loadRouteFromFirebase('train', 'marker', 'routes');
+        setState(() => trainPoints = points);
+        await buildMarkers('train', markers); // ← stations ثابتة
+        if (markers.isNotEmpty) {
+          _mapController.move(markers.first, 12);
+        } else if (points.isNotEmpty) {
+          _mapController.move(points.first, 12);
+        }
+        break;
+
+      case 3:
+        await loadRoute('tram');
+        break;
+
+      case 4:
+        await loadRoute('metro');
+        break;
+
+      case 5:
+        await loadRoute('teleferik');
+        break;
     }
   }
 
@@ -958,13 +1170,14 @@ class HomePageState extends State<HomePage> {
                   userAgentPackageName: 'com.example.transport_assistant',
                 ),
                 MarkerLayer(markers: _Markers),
-                if (routePoints.isNotEmpty)
+                if (trainPoints.isNotEmpty)
                   PolylineLayer(polylines: [
-                    Polyline(points: routePoints, color: Colors.blue, strokeWidth: 4)
+                    Polyline(points: trainPoints, color: Colors.blue, strokeWidth: 4)
                   ]),
-                PolylineLayer(polylines: [
-                  Polyline(points: tran_line, color: Colors.redAccent, strokeWidth: 4)
-                ]),
+                if (trainPoints.isNotEmpty)
+                  PolylineLayer(polylines: [
+                    Polyline(points: trainPoints, color: Colors.redAccent, strokeWidth: 4)
+                  ]),
                 if (L89.isNotEmpty)
                   PolylineLayer(polylines: [
                     Polyline(points: L89, color: Colors.red, strokeWidth: 4)
@@ -1006,12 +1219,24 @@ class HomePageState extends State<HomePage> {
                 MarkerLayer(markers: busMarkers),
                 MarkerLayer(markers: tramMarkers),
                 MarkerLayer(markers: teleferikMarkers),
-                MarkerLayer(markers: tranMarkers),
+                MarkerLayer(markers: trainMarkers),
                 MarkerLayer(markers: L12Markers),
                 MarkerLayer(markers: L58Markers),
                 MarkerLayer(markers: L608Markers),
                 MarkerLayer(markers: L36Markers),
                 MarkerLayer(markers: L89Markers),
+                // ── Agent route & markers (يُرسم فوق كل شيء) ──────────────
+                if (agentRoutePoints.isNotEmpty)
+                  PolylineLayer(polylines: [
+                    Polyline(
+                      points: agentRoutePoints,
+                      color: const Color(0xFF4A9EFF),
+                      strokeWidth: 5,
+                      borderColor: Colors.white.withOpacity(0.4),
+                      borderStrokeWidth: 1.5,
+                    ),
+                  ]),
+                MarkerLayer(markers: agentMarkers),
               ],
             ),
           ),
@@ -1267,6 +1492,7 @@ class HomePageState extends State<HomePage> {
                 ),
               ),
             ),
+
         ],
       ),
     );
@@ -1600,90 +1826,6 @@ class HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 10),
 
-          // Suggested lines
-          if (_showLineSelector && suggestedLines.isNotEmpty) ...[
-            const SizedBox(height: 10),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 150),
-              child: Container(
-                decoration: BoxDecoration(
-                  color: const Color(0xFF1C2B3A).withOpacity(0.6),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(color: const Color(0xFF3A4F65)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(12, 8, 12, 4),
-                      child: Align(
-                        alignment: Alignment.centerRight,
-                        child: Text(
-                          'suggested_lines'.tr(),
-                          style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12),
-                        ),
-                      ),
-                    ),
-                    Flexible(
-                      child: ListView.builder(
-                        shrinkWrap: true,
-                        padding: const EdgeInsets.only(bottom: 4),
-                        itemCount: suggestedLines.length,
-                        itemBuilder: (_, i) {
-                          final line = suggestedLines[i];
-                          return InkWell(
-                            onTap: () async {
-                              routeRequest.document = line.lineName;
-                              await sendData(routeRequest);
-                            },
-                            borderRadius: BorderRadius.circular(10),
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 7),
-                              child: Row(
-                                children: [
-                                  getIcon(line.lineName),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: Text(
-                                      line.lineName,
-                                      style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 13),
-                                    ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 8, vertical: 3),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade700,
-                                      borderRadius: BorderRadius.circular(10),
-                                    ),
-                                    child: Text(
-                                      'score_points'.tr(args: [line.score.toInt().toString()]),
-                                      style: const TextStyle(
-                                          color: Colors.white, fontSize: 11),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-
-          const SizedBox(height: 10),
-
           // Get Line button
           SizedBox(
             width: double.infinity,
@@ -1735,7 +1877,7 @@ class HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 10),
 
-// Back button
+          // Back button
           SizedBox(
             width: double.infinity,
             height: 46,
@@ -1779,173 +1921,225 @@ class HomePageState extends State<HomePage> {
       String endText, {
         required VoidCallback onTraceLine,
       }) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1C2B3A),
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: const [
-          BoxShadow(color: Colors.black45, blurRadius: 20, offset: Offset(0, -4)),
-        ],
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle bar
-          Center(
-            child: Container(
-              width: 36, height: 4,
-              margin: const EdgeInsets.only(bottom: 18),
-              decoration: BoxDecoration(
-                color: Colors.white24,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
+    // ← أضف هذا المتغير في الـ State الخاص بك:
+    // String? _selectedLineName;
+
+    return StatefulBuilder(
+      builder: (context, setModalState) {
+        return Container(
+          margin: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: const Color(0xFF1C2B3A),
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: const [
+              BoxShadow(color: Colors.black45, blurRadius: 20, offset: Offset(0, -4)),
+            ],
           ),
-
-          const SizedBox(height: 16),
-
-          if (suggestedLines.isNotEmpty) ...[
-            Align(
-              alignment: Alignment.centerRight,
-              child: Text(
-                'suggested_lines'.tr(),
-                style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600),
-              ),
-            ),
-            const SizedBox(height: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: ListView.builder(
-                shrinkWrap: true,
-                padding: EdgeInsets.zero,
-                itemCount: suggestedLines.length,
-                itemBuilder: (_, i) {
-                  final line = suggestedLines[i];
-                  return GestureDetector(
-                    onTap: () async {
-                      Navigator.pop(context);
-                      await onSelectRoute(line.lineName);
-                      setState(() => _showGetLine = false);
-                    },
-                    child: Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF2E3E4B),
-                        borderRadius: BorderRadius.circular(14),
-                        border: Border.all(color: const Color(0xFF3A4F65)),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 38, height: 38,
-                            decoration: BoxDecoration(
-                              color: _getMarkerColor(line.lineName),
-                              shape: BoxShape.circle,
-                            ),
-                            child: Center(child: getIcon(line.lineName)),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              line.lineName,
-                              style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w600),
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 10, vertical: 5),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.shade700,
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Text(
-                              'score_points'.tr(args: [line.score.toInt().toString()]),
-                              style: const TextStyle(
-                                  color: Colors.white, fontSize: 11),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 12),
-          ] else ...[
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2E3E4B),
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFF3A4F65)),
-              ),
-              child: Row(
-                children: [
-                  const Icon(Icons.info_outline, color: Colors.white54, size: 18),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      'press_get_line_first'.tr(),
-                      style: const TextStyle(color: Colors.white54, fontSize: 12),
-                    ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 36, height: 4,
+                  margin: const EdgeInsets.only(bottom: 18),
+                  decoration: BoxDecoration(
+                    color: Colors.white24,
+                    borderRadius: BorderRadius.circular(2),
                   ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-          ],
 
-          // Trace Line button
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton.icon(
-              onPressed: onTraceLine,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4A9EFF),
-                elevation: 4,
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(25)),
+              const SizedBox(height: 16),
+
+              if (suggestedLines.isNotEmpty) ...[
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: Text(
+                    'suggested_lines'.tr(),
+                    style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 200),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    padding: EdgeInsets.zero,
+                    itemCount: suggestedLines.length,
+                    itemBuilder: (_, i) {
+                      final line = suggestedLines[i];
+                      final isSelected = _selectedLineName == line.lineName; // ← تحقق من الاختيار
+
+                      return GestureDetector(
+                        onTap: () {
+                          // ← فقط اختر الخط، لا تغلق ولا ترسل
+                          setState(() => _selectedLineName = line.lineName);
+                          setModalState(() {}); // ← حدّث واجهة الـ modal
+                        },
+                        child: Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                          decoration: BoxDecoration(
+                            // ← لون مختلف للخط المختار
+                            color: isSelected
+                                ? const Color(0xFF1A3A5C)
+                                : const Color(0xFF2E3E4B),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              // ← border مميز للمختار
+                              color: isSelected
+                                  ? const Color(0xFF4A9EFF)
+                                  : const Color(0xFF3A4F65),
+                              width: isSelected ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 38, height: 38,
+                                decoration: BoxDecoration(
+                                  color: _getMarkerColor(line.lineName),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(child: getIcon(line.lineName)),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  line.lineName,
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                              // ← أيقونة تأكيد الاختيار
+                              if (isSelected)
+                                const Padding(
+                                  padding: EdgeInsets.only(right: 8),
+                                  child: Icon(Icons.check_circle,
+                                      color: Color(0xFF4A9EFF), size: 20),
+                                ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 10, vertical: 5),
+                                decoration: BoxDecoration(
+                                  color: Colors.blue.shade700,
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Text(
+                                  'score_points'.tr(args: [line.score.toInt().toString()]),
+                                  style: const TextStyle(
+                                      color: Colors.white, fontSize: 11),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ] else ...[
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2E3E4B),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: const Color(0xFF3A4F65)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.info_outline, color: Colors.white54, size: 18),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'press_get_line_first'.tr(),
+                          style: const TextStyle(color: Colors.white54, fontSize: 12),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+              ],
+
+              // Trace Line button
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton.icon(
+                  // ← يُفعَّل فقط إذا تم اختيار خط
+                  onPressed: _selectedLineName == null
+                      ? null
+                      : () async {
+                    final selectedName = _selectedLineName!;
+                    Navigator.pop(context);
+
+                    // امسح بيانات agent القديمة أولاً
+                    setState(() {
+                      agentRoutePoints = [];
+                      agentMarkers     = [];
+                    });
+
+                    // أرسل للـ agent واحفظ النتيجة
+                    routeRequest.document = selectedName;
+                    await sendData(routeRequest);
+
+                    setState(() => _showGetLine = false);
+                    onTraceLine();
+                  },
+                  style: ElevatedButton.styleFrom(
+                    // ← لون رمادي إذا لم يتم الاختيار
+                    backgroundColor: _selectedLineName == null
+                        ? Colors.grey.shade700
+                        : const Color(0xFF4A9EFF),
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25)),
+                  ),
+                  icon: const Icon(Icons.route, color: Colors.white, size: 20),
+                  label: Text(
+                    'trace_line'.tr(),
+                    style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white),
+                  ),
+                ),
               ),
-              icon: const Icon(Icons.route, color: Colors.white, size: 20),
-              label: Text(
-                'trace_line'.tr(),
-                style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white),
+
+              const SizedBox(height: 10),
+
+              // Cancel button
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: TextButton(
+                  onPressed: () {
+                    setState(() => _selectedLineName = null); // ← reset عند الإلغاء
+                    Navigator.pop(context);
+                  },
+                  child: Text(
+                    'cancel'.tr(),
+                    style: const TextStyle(color: Colors.white54, fontSize: 14),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-
-          const SizedBox(height: 10),
-
-          // Cancel button
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'cancel'.tr(),
-                style: const TextStyle(color: Colors.white54, fontSize: 14),
-              ),
-            ),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
+
+
 
   // ── Route Card ───────────────────────────────────────────────────────────────
   Widget _buildRouteCard() {
@@ -2204,7 +2398,27 @@ class HomePageState extends State<HomePage> {
       ),
     );
   }
+  Future<void> _geocodeManualInput(String address, String fieldType) async {
+    if (address.trim().isEmpty) return;
+    try {
+      final locations = await locationFromAddress(address);
 
+      // ── Print النتائج ──
+      print("🔍 Geocoding '$address':");
+      for (var loc in locations) {
+        print("   → lat: ${loc.latitude}, lng: ${loc.longitude}");
+      }
+
+      if (locations.isNotEmpty) {
+        final loc = locations.first;
+        print("✅ اخترنا: lat=${loc.latitude}, lng=${loc.longitude}");
+        // ... باقي الكود
+      }
+    } catch (e) {
+      print("❌ Geocoding error: $e");
+      _snack('تعذر تحديد المكان، اختره من القائمة');
+    }
+  }
   Widget _activeTextField({
     required TextEditingController controller,
     required String hint,
@@ -2255,6 +2469,19 @@ class HomePageState extends State<HomePage> {
                       _searchStartPlaces(v);
                     } else {
                       _searchEndPlaces(v);
+                    }
+                  },
+                  onSubmitted: (v) async {
+                    final predList = fieldType == 'start' ? _startPredictions : _endPredictions;
+                    if (predList.isNotEmpty) {
+                      if (fieldType == 'start') {
+                        await _selectStartPlaceNoMove(predList.first);
+                      } else {
+                        await _selectEndPlaceNoMove(predList.first);
+                      }
+                    } else {
+                      // ← لا تستخدم geocoding، اطلب من المستخدم الاختيار من القائمة
+                      _snack('اختر المكان من القائمة المقترحة');
                     }
                   },
                 ),

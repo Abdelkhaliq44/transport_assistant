@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:flutter/material.dart';
 
 class TeleferikLinesScreen extends StatefulWidget {
   final Function(String)? onSelectRoute;
@@ -10,16 +10,15 @@ class TeleferikLinesScreen extends StatefulWidget {
 }
 
 class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
-  final List<_FavoriteItem> _items = List.generate(
-    1,
-        (i) => _FavoriteItem(
-      titleKey: 'teleferik.name',
+  final List<_FavoriteItem> _items = [
+    _FavoriteItem(
+      titleKey: 'teleferik_name',
       routeKey: 'teleferik',
-      addressKey: 'teleferik.address',
+      addressKey: 'teleferik_address',
       isFav: true,
-      isSelected: i == 3,
+      isSelected: false,
     ),
-  );
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -37,10 +36,10 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
           SafeArea(
             child: Column(
               children: [
-                _buildTopBar(),
+                _buildTopBar(context),
                 const SizedBox(height: 20),
                 Text(
-                  'teleferik.title'.tr(),
+                  'teleferik_lines'.tr(),
                   style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
@@ -67,17 +66,25 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildTopBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: Image.asset(
-              'assets/images/ChatGPT_Image_Feb_13__2026__02_39_29_PM-removebg-preview 2.png',
-              fit: BoxFit.contain,
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E3E4B).withOpacity(0.85),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
           const SizedBox(width: 10),
@@ -95,7 +102,7 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
                     child: TextField(
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'taxi.search_hint'.tr(),
+                        hintText: 'choose_destination'.tr(),
                         hintStyle: const TextStyle(color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
@@ -130,7 +137,7 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
             );
           }
         });
-        widget.onSelectRoute?.call(_items[index].routeKey);
+        widget.onSelectRoute?.call(_items[index].routeKey.trim());
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -138,9 +145,7 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
           color: const Color(0xFFBECFDF).withOpacity(0.5),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: item.isSelected
-                ? const Color(0xFF4A9EFF)
-                : const Color(0xFF2E4065),
+            color: item.isSelected ? const Color(0xFF4A9EFF) : const Color(0xFF2E4065),
             width: item.isSelected ? 2 : 1,
           ),
         ),
@@ -178,11 +183,11 @@ class _TeleferikLinesScreenState extends State<TeleferikLinesScreen> {
                 onTap: () {
                   setState(() {
                     _items[index] = _FavoriteItem(
-                      titleKey: item.titleKey,
-                      routeKey: item.routeKey,
-                      addressKey: item.addressKey,
-                      isFav: !item.isFav,
-                      isSelected: item.isSelected,
+                      titleKey: _items[index].titleKey,
+                      routeKey: _items[index].routeKey,
+                      addressKey: _items[index].addressKey,
+                      isFav: !_items[index].isFav,
+                      isSelected: _items[index].isSelected,
                     );
                   });
                 },

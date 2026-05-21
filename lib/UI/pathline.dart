@@ -17,7 +17,7 @@ class PathLinesScreen extends StatefulWidget {
 }
 
 class PathLinesScreenState extends State<PathLinesScreen> {
-  final List<_PathItem> _items = [];
+  late final List<_PathItem> _items;
   Widget? _currentPage;
 
   void resetPage() {
@@ -27,13 +27,13 @@ class PathLinesScreenState extends State<PathLinesScreen> {
   @override
   void initState() {
     super.initState();
-    _items.addAll([
+    _items = [
       _PathItem(
         labelKey: 'taxi_line',
         icon: FontAwesomeIcons.taxi,
-        page: TaxiLinesScreen(
+        buildPage: () => TaxiLinesScreen(
           onSelectRoute: (lineName) {
-            setState(() => _currentPage = null);
+            Navigator.pop(context);
             widget.onSelectRoute?.call(lineName);
           },
         ),
@@ -41,9 +41,9 @@ class PathLinesScreenState extends State<PathLinesScreen> {
       _PathItem(
         labelKey: 'bus_line',
         icon: FontAwesomeIcons.bus,
-        page: BusLinesScreen(
+        buildPage: () => BusLinesScreen(
           onSelectRoute: (lineName) {
-            setState(() => _currentPage = null);
+            Navigator.pop(context);
             widget.onSelectRoute?.call(lineName);
           },
         ),
@@ -51,9 +51,9 @@ class PathLinesScreenState extends State<PathLinesScreen> {
       _PathItem(
         labelKey: 'train_line',
         icon: FontAwesomeIcons.train,
-        page: TrainLinesScreen(
+        buildPage: () => TrainLinesScreen(
               (lineName) {
-            setState(() => _currentPage = null);
+            Navigator.pop(context);
             widget.onSelectRoute?.call(lineName);
           },
         ),
@@ -61,9 +61,9 @@ class PathLinesScreenState extends State<PathLinesScreen> {
       _PathItem(
         labelKey: 'tram_line',
         icon: FontAwesomeIcons.trainTram,
-        page: TramLinesScreen(
+        buildPage: () => TramLinesScreen(
           onSelectRoute: (lineName) {
-            setState(() => _currentPage = null);
+            Navigator.pop(context);
             widget.onSelectRoute?.call(lineName);
           },
         ),
@@ -71,9 +71,9 @@ class PathLinesScreenState extends State<PathLinesScreen> {
       _PathItem(
         labelKey: 'metro_line',
         icon: FontAwesomeIcons.trainSubway,
-        page: MitroLinesScreen(
+        buildPage: () => MitroLinesScreen(
           onSelectRoute: (lineName) {
-            setState(() => _currentPage = null);
+            Navigator.pop(context);
             widget.onSelectRoute?.call(lineName);
           },
         ),
@@ -81,20 +81,18 @@ class PathLinesScreenState extends State<PathLinesScreen> {
       _PathItem(
         labelKey: 'telefirik_line',
         icon: FontAwesomeIcons.cableCar,
-        page: TeleferikLinesScreen(
+        buildPage: () => TeleferikLinesScreen(
           onSelectRoute: (lineName) {
-            setState(() => _currentPage = null);
+            Navigator.pop(context);
             widget.onSelectRoute?.call(lineName);
           },
         ),
       ),
-    ]);
+    ];
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_currentPage != null) return _currentPage!;
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
@@ -127,8 +125,7 @@ class PathLinesScreenState extends State<PathLinesScreen> {
                       crossAxisCount: 2,
                       crossAxisSpacing: 16,
                       mainAxisSpacing: 16,
-                      children:
-                      _items.map((item) => _buildCard(item)).toList(),
+                      children: _items.map((item) => _buildCard(item)).toList(),
                     ),
                   ),
                 ),
@@ -163,12 +160,10 @@ class PathLinesScreenState extends State<PathLinesScreen> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: TextField(
-                      style:
-                      const TextStyle(color: Colors.white, fontSize: 14),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
                         hintText: 'choose_destination'.tr(),
-                        hintStyle: const TextStyle(
-                            color: Colors.white, fontSize: 13),
+                        hintStyle: const TextStyle(color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -177,8 +172,7 @@ class PathLinesScreenState extends State<PathLinesScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 12),
-                    child: Icon(Icons.search,
-                        color: Colors.grey.shade400, size: 20),
+                    child: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
                   ),
                 ],
               ),
@@ -192,7 +186,10 @@ class PathLinesScreenState extends State<PathLinesScreen> {
   Widget _buildCard(_PathItem item) {
     return GestureDetector(
       onTap: () {
-        setState(() => _currentPage = item.page);
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => item.buildPage()),
+        );
       },
       child: Container(
         decoration: BoxDecoration(
@@ -233,11 +230,11 @@ class PathLinesScreenState extends State<PathLinesScreen> {
 class _PathItem {
   final String labelKey;
   final FaIconData icon;
-  final Widget page;
+  final Widget Function() buildPage;
 
   _PathItem({
     required this.labelKey,
     required this.icon,
-    required this.page,
+    required this.buildPage,
   });
 }

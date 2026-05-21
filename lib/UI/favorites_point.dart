@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:transport_assistant/ui_pages/acount/sign_in.dart';
 
 class FavoritesScreen extends StatefulWidget {
   const FavoritesScreen({super.key});
@@ -8,9 +10,8 @@ class FavoritesScreen extends StatefulWidget {
 }
 
 class _FavoritesScreenState extends State<FavoritesScreen> {
-  int _selectedNavIndex = 1; // Favorites is selected
+  bool _isLoggedIn = false;
 
-  // Favorite items list — index 3 is selected/highlighted
   final List<_FavoriteItem> _items = List.generate(
     5,
         (i) => _FavoriteItem(
@@ -23,8 +24,18 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
   );
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    _checkLoginState();
+  }
 
+  Future<void> _checkLoginState() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() => _isLoggedIn = prefs.getBool('logged_in') ?? false);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
@@ -37,18 +48,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
             ),
           ),
 
-          // ── DARK OVERLAY (اختياري) ──
-          Container(
-            color: Colors.black.withOpacity(0.3),
-          ),
+          // ── DARK OVERLAY ──
+          Container(color: Colors.black.withOpacity(0.3)),
 
-          // ── CONTENT (نفس كودك بلا تبديل) ──
+          // ── CONTENT ──
           SafeArea(
             child: Column(
               children: [
                 _buildTopBar(),
                 const SizedBox(height: 20),
-
                 const Text(
                   'Favorites Points',
                   style: TextStyle(
@@ -58,24 +66,91 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 Expanded(
-                  child: ListView.separated(
+                  child: _isLoggedIn
+                      ? ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     itemCount: _items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 10),
-                    itemBuilder: (context, index) {
-                      return _buildFavoriteCard(_items[index], index);
-                    },
-                  ),
+                    separatorBuilder: (_, __) =>
+                    const SizedBox(height: 10),
+                    itemBuilder: (context, index) =>
+                        _buildFavoriteCard(_items[index], index),
+                  )
+                      : _buildNotLoggedInContent(),
                 ),
                 const SizedBox(height: 8),
-
-
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Not Logged In ──
+  Widget _buildNotLoggedInContent() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 80,
+              height: 80,
+              decoration: BoxDecoration(
+                color: const Color(0xFFBECFDF).withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.favorite_border,
+                size: 36,
+                color: Color(0xFFBECFDF),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const Text(
+              "You don't have an account",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Sign in to save your favourite places',
+              style: TextStyle(color: Colors.white70, fontSize: 14),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: ElevatedButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => SignIn()),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFBECFDF),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
+                child: const Text(
+                  'Sign in',
+                  style: TextStyle(
+                    color: Color(0xFF1F2E3B),
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -86,18 +161,15 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          // Logo
           SizedBox(
             width: 36,
             height: 36,
             child: Image.asset(
-              'assets/images/ChatGPT_Image_Feb_13__2026__02_39_29_PM-removebg-preview 2.png', // حط اسم الصورة تاعك هنا
+              'assets/images/ChatGPT_Image_Feb_13__2026__02_39_29_PM-removebg-preview 2.png',
               fit: BoxFit.contain,
             ),
           ),
           const SizedBox(width: 10),
-
-          // Search field
           Expanded(
             child: Container(
               height: 40,
@@ -114,8 +186,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
                         hintText: 'Choose your destination',
-                        hintStyle: TextStyle(
-                            color: Colors.white, fontSize: 13),
+                        hintStyle:
+                        TextStyle(color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -167,52 +239,34 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Location pin icon
             Padding(
-              padding: const EdgeInsets.only(top:   20),
-              child: Icon(
-                Icons.location_on,
-                color: Color(0xFF2E3E4B),
-                size: 25,
-              ),
+              padding: const EdgeInsets.only(top: 20),
+              child: Icon(Icons.location_on,
+                  color: Color(0xFF2E3E4B), size: 25),
             ),
             const SizedBox(width: 10),
-
-            // Text content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    item.title,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Text(item.title,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white)),
                   const SizedBox(height: 2),
-                  Text(
-                    item.subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Text(item.subtitle,
+                      style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white)),
                   const SizedBox(height: 4),
-                  Text(
-                    item.address,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.white,
-                    ),
-                  ),
+                  Text(item.address,
+                      style: const TextStyle(
+                          fontSize: 11, color: Colors.white)),
                 ],
               ),
             ),
-
-            // Heart icon
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: GestureDetector(
@@ -222,14 +276,14 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
                       title: item.title,
                       subtitle: item.subtitle,
                       address: item.address,
-                      isFav: !item.isFav, // 🔥 تبديل الحالة
+                      isFav: !item.isFav,
                       isSelected: item.isSelected,
                     );
                   });
                 },
                 child: Icon(
                   item.isFav ? Icons.favorite : Icons.favorite_border,
-                  color: item.isFav ? Colors.white : Colors.white, // لون كي يكون مفعل
+                  color: Colors.white,
                   size: 20,
                 ),
               ),
@@ -239,13 +293,8 @@ class _FavoritesScreenState extends State<FavoritesScreen> {
       ),
     );
   }
-
-  // ── Bottom Navigation Bar ──
-
 }
 
-// ─────────────────────────────────────────────
-// Data Models
 // ─────────────────────────────────────────────
 class _FavoriteItem {
   final String title;
@@ -261,60 +310,4 @@ class _FavoriteItem {
     required this.isFav,
     required this.isSelected,
   });
-}
-
-class _NavItem {
-  final IconData icon;
-  final String label;
-  _NavItem({required this.icon, required this.label});
-}
-
-// ─────────────────────────────────────────────
-// TransWay Logo Painter
-// ─────────────────────────────────────────────
-class _LogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
-    final w = size.width;
-    final h = size.height;
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.08, h * 0.85)
-        ..lineTo(w * 0.38, h * 0.15)
-        ..lineTo(w * 0.50, h * 0.32),
-      paint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.92, h * 0.85)
-        ..lineTo(w * 0.62, h * 0.15)
-        ..lineTo(w * 0.50, h * 0.32),
-      paint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.24, h * 0.60)
-        ..quadraticBezierTo(w * 0.50, h * 0.50, w * 0.76, h * 0.60),
-      paint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.50, h * 0.05)
-        ..lineTo(w * 0.42, h * 0.20)
-        ..lineTo(w * 0.58, h * 0.20)
-        ..close(),
-      Paint()..color = Colors.white,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

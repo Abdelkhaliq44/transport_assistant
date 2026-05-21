@@ -1,3 +1,4 @@
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 
 class BusLinesScreen extends StatefulWidget {
@@ -9,42 +10,39 @@ class BusLinesScreen extends StatefulWidget {
 }
 
 class _BusLinesScreenState extends State<BusLinesScreen> {
-  int _selectedNavIndex = 1; // Favorites is selected
-
-  // Favorite items list — index 3 is selected/highlighted
   final List<_FavoriteItem> _items = [
     _FavoriteItem(
-      title: ' L608A',
-
-      address: 'Dergana,Haach',
+      titleKey: 'bus_L608A',
+      routeKey: 'L608A',
+      addressKey: 'bus_L608A_address',
       isFav: true,
       isSelected: false,
     ),
-
     _FavoriteItem(
-      title: 'L58',
-      address: 'Place des Martyrs,chevally',
+      titleKey: 'bus_L58',
+      routeKey: 'L58',
+      addressKey: 'bus_L58_address',
       isFav: true,
       isSelected: true,
     ),
-
     _FavoriteItem(
-      title: 'L12',
-      address: 'Staoueli,Place des Martyrs',
+      titleKey: 'bus_L12',
+      routeKey: 'L12',
+      addressKey: 'bus_L12_address',
       isFav: false,
       isSelected: false,
     ),
-
     _FavoriteItem(
-      title: 'L36',
-      address: 'Beaux Arts,Basta ALi',
+      titleKey: 'bus_L36',
+      routeKey: 'L36',
+      addressKey: 'bus_L36_address',
       isFav: true,
       isSelected: false,
     ),
-
     _FavoriteItem(
-      title: 'L89A',
-      address: 'kouba,Place du 1er Mai',
+      titleKey: 'bus_L89A',
+      routeKey: 'L89A',
+      addressKey: 'bus_L89A_address',
       isFav: false,
       isSelected: false,
     ),
@@ -52,41 +50,31 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // ── BACKGROUND IMAGE ──
           SizedBox.expand(
             child: Image.asset(
               'assets/images/background_pathline.jpg',
               fit: BoxFit.cover,
             ),
           ),
-
-          // ── DARK OVERLAY (اختياري) ──
-          Container(
-            color: Colors.black.withOpacity(0.3),
-          ),
-
-          // ── CONTENT (نفس كودك بلا تبديل) ──
+          Container(color: Colors.black.withOpacity(0.3)),
           SafeArea(
             child: Column(
               children: [
-                _buildTopBar(),
+                _buildTopBar(context),
                 const SizedBox(height: 20),
-
-                const Text(
-                  'Bus Lines',
-                  style: TextStyle(
+                Text(
+                  'bus_lines'.tr(),
+                  style: const TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
                 const SizedBox(height: 20),
-
                 Expanded(
                   child: ListView.separated(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -98,8 +86,6 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
                   ),
                 ),
                 const SizedBox(height: 8),
-
-
               ],
             ),
           ),
@@ -108,24 +94,28 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
     );
   }
 
-  // ── Top Search Bar ──
-  Widget _buildTopBar() {
+  Widget _buildTopBar(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
       child: Row(
         children: [
-          // Logo
-          SizedBox(
-            width: 36,
-            height: 36,
-            child: Image.asset(
-              'assets/images/ChatGPT_Image_Feb_13__2026__02_39_29_PM-removebg-preview 2.png', // حط اسم الصورة تاعك هنا
-              fit: BoxFit.contain,
+          GestureDetector(
+            onTap: () => Navigator.pop(context),
+            child: Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: const Color(0xFF2E3E4B).withOpacity(0.85),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.arrow_back_ios_new_rounded,
+                color: Colors.white,
+                size: 18,
+              ),
             ),
           ),
           const SizedBox(width: 10),
-
-          // Search field
           Expanded(
             child: Container(
               height: 40,
@@ -138,12 +128,10 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
                   const SizedBox(width: 14),
                   Expanded(
                     child: TextField(
-                      style:
-                      const TextStyle(color: Colors.white, fontSize: 14),
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
                       decoration: InputDecoration(
-                        hintText: 'Choose your destination',
-                        hintStyle: TextStyle(
-                            color: Colors.white, fontSize: 13),
+                        hintText: 'choose_destination'.tr(),
+                        hintStyle: const TextStyle(color: Colors.white, fontSize: 13),
                         border: InputBorder.none,
                         isDense: true,
                         contentPadding: EdgeInsets.zero,
@@ -152,8 +140,7 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
                   ),
                   Padding(
                     padding: const EdgeInsets.only(right: 12),
-                    child: Icon(Icons.search,
-                        color: Colors.grey.shade400, size: 20),
+                    child: Icon(Icons.search, color: Colors.grey.shade400, size: 20),
                   ),
                 ],
               ),
@@ -164,24 +151,21 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
     );
   }
 
-  // ── Favorite Card ──
   Widget _buildFavoriteCard(_FavoriteItem item, int index) {
     return GestureDetector(
-      // ✅ صحيح — onSelectRoute خارج setState وخارج الـ loop
       onTap: () {
-        print("🟢 تم الضغط على: ${_items[index].title.trim()}"); // ← أضف هذا
         setState(() {
           for (int i = 0; i < _items.length; i++) {
             _items[i] = _FavoriteItem(
-              title: _items[i].title,
-              address: _items[i].address,
+              titleKey: _items[i].titleKey,
+              routeKey: _items[i].routeKey,
+              addressKey: _items[i].addressKey,
               isFav: _items[i].isFav,
               isSelected: i == index,
             );
           }
         });
-        widget.onSelectRoute?.call(_items[index].title.trim());
-
+        widget.onSelectRoute?.call(_items[index].routeKey.trim());
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
@@ -189,18 +173,15 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
           color: const Color(0xFFBECFDF).withOpacity(0.5),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: item.isSelected
-                ? const Color(0xFF4A9EFF)
-                : const Color(0xFF2E4065),
+            color: item.isSelected ? const Color(0xFF4A9EFF) : const Color(0xFF2E4065),
             width: item.isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Location pin icon
-            Padding(
-              padding: const EdgeInsets.only(top:   20),
+            const Padding(
+              padding: EdgeInsets.only(top: 20),
               child: Icon(
                 Icons.location_on,
                 color: Color(0xFF2E3E4B),
@@ -208,57 +189,43 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
               ),
             ),
             const SizedBox(width: 10),
-
-            // Text content
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item.title,
+                    item.titleKey.tr(),
                     style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                       color: Colors.white,
                     ),
                   ),
-                  const SizedBox(height: 2),
-
                   const SizedBox(height: 4),
                   Text(
-                    item.address,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: Colors.white,
-                    ),
+                    item.addressKey.tr(),
+                    style: const TextStyle(fontSize: 11, color: Colors.white),
                   ),
                 ],
               ),
             ),
-
-            // Heart icon
             Padding(
               padding: const EdgeInsets.only(top: 2),
               child: GestureDetector(
-                // ✅ صحيح — onSelectRoute خارج setState وخارج الـ loop
                 onTap: () {
-                  print("🟢 تم الضغط على: ${_items[index].title.trim()}"); // ← أضف هذا
                   setState(() {
-                    for (int i = 0; i < _items.length; i++) {
-                      _items[i] = _FavoriteItem(
-                        title: _items[i].title,
-                        address: _items[i].address,
-                        isFav: _items[i].isFav,
-                        isSelected: i == index,
-                      );
-                    }
+                    _items[index] = _FavoriteItem(
+                      titleKey: _items[index].titleKey,
+                      routeKey: _items[index].routeKey,
+                      addressKey: _items[index].addressKey,
+                      isFav: !_items[index].isFav,
+                      isSelected: _items[index].isSelected,
+                    );
                   });
-                  widget.onSelectRoute?.call(_items[index].title.trim());
-
                 },
                 child: Icon(
                   item.isFav ? Icons.favorite : Icons.favorite_border,
-                  color: item.isFav ? Colors.white : Colors.white, // لون كي يكون مفعل
+                  color: Colors.white,
                   size: 20,
                 ),
               ),
@@ -268,81 +235,20 @@ class _BusLinesScreenState extends State<BusLinesScreen> {
       ),
     );
   }
-
-  // ── Bottom Navigation Bar ──
-
 }
 
-// ─────────────────────────────────────────────
-// Data Models
-// ─────────────────────────────────────────────
 class _FavoriteItem {
-
-  final String title;
-  final String address;
+  final String titleKey;
+  final String routeKey;
+  final String addressKey;
   final bool isFav;
   final bool isSelected;
 
   _FavoriteItem({
-    required this.title,
-    required this.address,
+    required this.titleKey,
+    required this.routeKey,
+    required this.addressKey,
     required this.isFav,
     required this.isSelected,
   });
-}
-
-class _NavItem {
-  final IconData icon;
-  final String label;
-  _NavItem({required this.icon, required this.label});
-}
-
-// ─────────────────────────────────────────────
-// TransWay Logo Painter
-// ─────────────────────────────────────────────
-class _LogoPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..strokeWidth = 3
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round
-      ..style = PaintingStyle.stroke;
-
-    final w = size.width;
-    final h = size.height;
-
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.08, h * 0.85)
-        ..lineTo(w * 0.38, h * 0.15)
-        ..lineTo(w * 0.50, h * 0.32),
-      paint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.92, h * 0.85)
-        ..lineTo(w * 0.62, h * 0.15)
-        ..lineTo(w * 0.50, h * 0.32),
-      paint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.24, h * 0.60)
-        ..quadraticBezierTo(w * 0.50, h * 0.50, w * 0.76, h * 0.60),
-      paint,
-    );
-    canvas.drawPath(
-      Path()
-        ..moveTo(w * 0.50, h * 0.05)
-        ..lineTo(w * 0.42, h * 0.20)
-        ..lineTo(w * 0.58, h * 0.20)
-        ..close(),
-      Paint()..color = Colors.white,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
