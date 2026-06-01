@@ -148,5 +148,6 @@
   "sign_in_to_see_saved": "Sign in to view your saved points",
   "sign_in_to_see_history": "Sign in to view your history",
   "sign_in": "Sign in",
-  "connect_as_guest": "Continue as guest"
+  "connect_as_guest": "Continue as guest",
+  "nearest_transport_warning": "The nearest transport option is 5 km away. Please select the nearest points (between Martyrs Square and Darghana)"
 }

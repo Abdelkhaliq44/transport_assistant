@@ -293,15 +293,7 @@ class HomePageState extends State<HomePage> {
       return;
     }
     try {
-      final result = await places.findAutocompletePredictions(
-        query,
-        // ── تقييد البحث على الجزائر العاصمة ──
-        locationBias: Places.LatLngBounds(
-          southwest: Places.LatLng(lat: 36.60, lng: 2.90),
-          northeast: Places.LatLng(lat: 36.90, lng: 3.30),
-        ),
-        countries: ['DZ'],
-      );
+      final result = await places.findAutocompletePredictions(query);
       setState(() => _startPredictions = result.predictions);
     } catch (e) {
       print("Start search error: $e");
@@ -314,15 +306,7 @@ class HomePageState extends State<HomePage> {
       return;
     }
     try {
-      final result = await places.findAutocompletePredictions(
-        query,
-        // ── تقييد البحث على الجزائر العاصمة ──
-        locationBias: Places.LatLngBounds(
-          southwest: Places.LatLng(lat: 36.60, lng: 2.90),
-          northeast: Places.LatLng(lat: 36.90, lng: 3.30),
-        ),
-        countries: ['DZ'],
-      );
+      final result = await places.findAutocompletePredictions(query);
       setState(() => _endPredictions = result.predictions);
     } catch (e) {
       print("End search error: $e");
@@ -1118,26 +1102,51 @@ class HomePageState extends State<HomePage> {
       return;
     }
 
-    await selectLines();
-
+    // ✅ 1. أظهر loading فوراً
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
+      isDismissible: false,
+      enableDrag: false,
       builder: (ctx) => SafeArea(
         child: _buildGetLineAlert(
           startText,
           endText,
-          onTraceLine: () {
-            Navigator.pop(ctx);
-            setState(() {
-              _showGetLine = false;
-              _showRouteCard = true;
-            });
-          },
+          isLoading: true,
+          onTraceLine: () {},
         ),
       ),
     );
+
+    // ✅ 2. جلب البيانات
+    await selectLines();
+
+    // ✅ 3. أغلق loading
+    if (mounted) Navigator.pop(context);
+
+    // ✅ 4. أظهر النتائج
+    if (mounted) {
+      showModalBottomSheet(
+        context: context,
+        backgroundColor: Colors.transparent,
+        isScrollControlled: true,
+        builder: (ctx) => SafeArea(
+          child: _buildGetLineAlert(
+            startText,
+            endText,
+            isLoading: false,
+            onTraceLine: () {
+              Navigator.pop(ctx);
+              setState(() {
+                _showGetLine = false;
+                _showRouteCard = true;
+              });
+            },
+          ),
+        ),
+      );
+    }
   }
 
   // ══════════════════════════════════════════════════════════════════════════════
@@ -1840,26 +1849,51 @@ class HomePageState extends State<HomePage> {
                   return;
                 }
 
-                await selectLines();
-
+                // ✅ 1. أظهر الـ loading alert فوراً
                 showModalBottomSheet(
                   context: context,
                   backgroundColor: Colors.transparent,
                   isScrollControlled: true,
+                  isDismissible: false,
+                  enableDrag: false,
                   builder: (ctx) => SafeArea(
                     child: _buildGetLineAlert(
                       startText,
                       endText,
-                      onTraceLine: () {
-                        Navigator.pop(ctx);
-                        setState(() {
-                          _showGetLine = false;
-                          _showRouteCard = true;
-                        });
-                      },
+                      isLoading: true,
+                      onTraceLine: () {},
                     ),
                   ),
                 );
+
+                // ✅ 2. جلب البيانات من الـ server
+                await selectLines();
+
+                // ✅ 3. أغلق الـ loading alert
+                if (mounted) Navigator.pop(context);
+
+                // ✅ 4. أظهر الـ alert مع النتائج
+                if (mounted) {
+                  showModalBottomSheet(
+                    context: context,
+                    backgroundColor: Colors.transparent,
+                    isScrollControlled: true,
+                    builder: (ctx) => SafeArea(
+                      child: _buildGetLineAlert(
+                        startText,
+                        endText,
+                        isLoading: false,
+                        onTraceLine: () {
+                          Navigator.pop(ctx);
+                          setState(() {
+                            _showGetLine = false;
+                            _showRouteCard = true;
+                          });
+                        },
+                      ),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFFBECFDF),
@@ -1919,11 +1953,9 @@ class HomePageState extends State<HomePage> {
   Widget _buildGetLineAlert(
       String startText,
       String endText, {
+        required bool isLoading,
         required VoidCallback onTraceLine,
       }) {
-    // ← أضف هذا المتغير في الـ State الخاص بك:
-    // String? _selectedLineName;
-
     return StatefulBuilder(
       builder: (context, setModalState) {
         return Container(
@@ -1951,187 +1983,213 @@ class HomePageState extends State<HomePage> {
                 ),
               ),
 
-              const SizedBox(height: 16),
-
-              if (suggestedLines.isNotEmpty) ...[
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    'suggested_lines'.tr(),
-                    style: const TextStyle(
-                        color: Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600),
+              // ✅ حالة الانتظار
+              if (isLoading) ...[
+                const SizedBox(height: 20),
+                const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: CircularProgressIndicator(
+                    color: Color(0xFF4A9EFF),
+                    strokeWidth: 3,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  'جاري البحث عن الخطوط...',
+                  style: const TextStyle(
+                    color: Colors.white70,
+                    fontSize: 15,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
                 const SizedBox(height: 8),
-                ConstrainedBox(
-                  constraints: const BoxConstraints(maxHeight: 200),
-                  child: ListView.builder(
-                    shrinkWrap: true,
-                    padding: EdgeInsets.zero,
-                    itemCount: suggestedLines.length,
-                    itemBuilder: (_, i) {
-                      final line = suggestedLines[i];
-                      final isSelected = _selectedLineName == line.lineName; // ← تحقق من الاختيار
+                Text(
+                  '$startText  →  $endText',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Colors.white38,
+                    fontSize: 12,
+                  ),
+                ),
+                const SizedBox(height: 24),
+              ]
 
-                      return GestureDetector(
-                        onTap: () {
-                          // ← فقط اختر الخط، لا تغلق ولا ترسل
-                          setState(() => _selectedLineName = line.lineName);
-                          setModalState(() {}); // ← حدّث واجهة الـ modal
-                        },
-                        child: Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                          decoration: BoxDecoration(
-                            // ← لون مختلف للخط المختار
-                            color: isSelected
-                                ? const Color(0xFF1A3A5C)
-                                : const Color(0xFF2E3E4B),
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              // ← border مميز للمختار
+              // ✅ حالة النتائج
+              else ...[
+                const SizedBox(height: 8),
+
+                if (suggestedLines.isNotEmpty) ...[
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: Text(
+                      'suggested_lines'.tr(),
+                      style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(maxHeight: 200),
+                    child: ListView.builder(
+                      shrinkWrap: true,
+                      padding: EdgeInsets.zero,
+                      itemCount: suggestedLines.length,
+                      itemBuilder: (_, i) {
+                        final line = suggestedLines[i];
+                        final isSelected = _selectedLineName == line.lineName;
+
+                        return GestureDetector(
+                          onTap: () {
+                            setState(() => _selectedLineName = line.lineName);
+                            setModalState(() {});
+                          },
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            decoration: BoxDecoration(
                               color: isSelected
-                                  ? const Color(0xFF4A9EFF)
-                                  : const Color(0xFF3A4F65),
-                              width: isSelected ? 2 : 1,
+                                  ? const Color(0xFF1A3A5C)
+                                  : const Color(0xFF2E3E4B),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isSelected
+                                    ? const Color(0xFF4A9EFF)
+                                    : const Color(0xFF3A4F65),
+                                width: isSelected ? 2 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 38, height: 38,
+                                  decoration: BoxDecoration(
+                                    color: _getMarkerColor(line.lineName),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(child: getIcon(line.lineName)),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    line.lineName,
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600),
+                                  ),
+                                ),
+                                if (isSelected)
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 8),
+                                    child: Icon(Icons.check_circle,
+                                        color: Color(0xFF4A9EFF), size: 20),
+                                  ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 10, vertical: 5),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blue.shade700,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    'score_points'.tr(args: [line.score.toInt().toString()]),
+                                    style: const TextStyle(
+                                        color: Colors.white, fontSize: 11),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 38, height: 38,
-                                decoration: BoxDecoration(
-                                  color: _getMarkerColor(line.lineName),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Center(child: getIcon(line.lineName)),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  line.lineName,
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w600),
-                                ),
-                              ),
-                              // ← أيقونة تأكيد الاختيار
-                              if (isSelected)
-                                const Padding(
-                                  padding: EdgeInsets.only(right: 8),
-                                  child: Icon(Icons.check_circle,
-                                      color: Color(0xFF4A9EFF), size: 20),
-                                ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 10, vertical: 5),
-                                decoration: BoxDecoration(
-                                  color: Colors.blue.shade700,
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  'score_points'.tr(args: [line.score.toInt().toString()]),
-                                  style: const TextStyle(
-                                      color: Colors.white, fontSize: 11),
-                                ),
-                              ),
-                            ],
+                        );
+                      },
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ] else ...[
+                  Container(
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E3E4B),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: const Color(0xFF3A4F65)),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Colors.white54, size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            'nearest_transport_warning'.tr(),                            style: const TextStyle(color: Colors.white54, fontSize: 12),
                           ),
                         ),
-                      );
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                ],
+
+                // Trace Line button
+                SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: ElevatedButton.icon(
+                    onPressed: _selectedLineName == null
+                        ? null
+                        : () async {
+                      final selectedName = _selectedLineName!;
+                      Navigator.pop(context);
+
+                      setState(() {
+                        agentRoutePoints = [];
+                        agentMarkers = [];
+                      });
+
+                      routeRequest.document = selectedName;
+                      await sendData(routeRequest);
+
+                      setState(() => _showGetLine = false);
+                      onTraceLine();
                     },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: _selectedLineName == null
+                          ? Colors.grey.shade700
+                          : const Color(0xFF4A9EFF),
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(25)),
+                    ),
+                    icon: const Icon(Icons.route, color: Colors.white, size: 20),
+                    label: Text(
+                      'trace_line'.tr(),
+                      style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
-              ] else ...[
-                Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF2E3E4B),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(color: const Color(0xFF3A4F65)),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.info_outline, color: Colors.white54, size: 18),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'press_get_line_first'.tr(),
-                          style: const TextStyle(color: Colors.white54, fontSize: 12),
-                        ),
-                      ),
-                    ],
+
+                const SizedBox(height: 10),
+
+                // Cancel button
+                SizedBox(
+                  width: double.infinity,
+                  height: 44,
+                  child: TextButton(
+                    onPressed: () {
+                      setState(() => _selectedLineName = null);
+                      Navigator.pop(context);
+                    },
+                    child: Text(
+                      'cancel'.tr(),
+                      style: const TextStyle(color: Colors.white54, fontSize: 14),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 12),
               ],
-
-              // Trace Line button
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton.icon(
-                  // ← يُفعَّل فقط إذا تم اختيار خط
-                  onPressed: _selectedLineName == null
-                      ? null
-                      : () async {
-                    final selectedName = _selectedLineName!;
-                    Navigator.pop(context);
-
-                    // امسح بيانات agent القديمة أولاً
-                    setState(() {
-                      agentRoutePoints = [];
-                      agentMarkers     = [];
-                    });
-
-                    // أرسل للـ agent واحفظ النتيجة
-                    routeRequest.document = selectedName;
-                    await sendData(routeRequest);
-
-                    setState(() => _showGetLine = false);
-                    onTraceLine();
-                  },
-                  style: ElevatedButton.styleFrom(
-                    // ← لون رمادي إذا لم يتم الاختيار
-                    backgroundColor: _selectedLineName == null
-                        ? Colors.grey.shade700
-                        : const Color(0xFF4A9EFF),
-                    elevation: 4,
-                    shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(25)),
-                  ),
-                  icon: const Icon(Icons.route, color: Colors.white, size: 20),
-                  label: Text(
-                    'trace_line'.tr(),
-                    style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              // Cancel button
-              SizedBox(
-                width: double.infinity,
-                height: 44,
-                child: TextButton(
-                  onPressed: () {
-                    setState(() => _selectedLineName = null); // ← reset عند الإلغاء
-                    Navigator.pop(context);
-                  },
-                  child: Text(
-                    'cancel'.tr(),
-                    style: const TextStyle(color: Colors.white54, fontSize: 14),
-                  ),
-                ),
-              ),
             ],
           ),
         );
@@ -2402,20 +2460,35 @@ class HomePageState extends State<HomePage> {
     if (address.trim().isEmpty) return;
     try {
       final locations = await locationFromAddress(address);
-
-      // ── Print النتائج ──
-      print("🔍 Geocoding '$address':");
-      for (var loc in locations) {
-        print("   → lat: ${loc.latitude}, lng: ${loc.longitude}");
-      }
-
       if (locations.isNotEmpty) {
         final loc = locations.first;
-        print("✅ اخترنا: lat=${loc.latitude}, lng=${loc.longitude}");
-        // ... باقي الكود
+        final target = LatLng(loc.latitude, loc.longitude);
+        setState(() {
+          if (fieldType == 'start') {
+            startPointSelected = target;
+            routeRequest.lat1 = loc.latitude;
+            routeRequest.long1 = loc.longitude;
+            _startPredictions = [];
+          } else {
+            endPointSelected = target;
+            routeRequest.lat2 = loc.latitude;
+            routeRequest.long2 = loc.longitude;
+            _endPredictions = [];
+          }
+          _activeField = null;
+        });
+
+        // ── إرسال للـ agent إذا تم تحديد كلا النقطتين ──
+        if (routeRequest.lat1 != null &&
+            routeRequest.long1 != null &&
+            routeRequest.lat2 != null &&
+            routeRequest.long2 != null) {
+          await sendData(routeRequest);
+        }
+      } else {
+        _snack('لم يتم العثور على المكان، اختره من القائمة');
       }
     } catch (e) {
-      print("❌ Geocoding error: $e");
       _snack('تعذر تحديد المكان، اختره من القائمة');
     }
   }
@@ -2480,8 +2553,15 @@ class HomePageState extends State<HomePage> {
                         await _selectEndPlaceNoMove(predList.first);
                       }
                     } else {
-                      // ← لا تستخدم geocoding، اطلب من المستخدم الاختيار من القائمة
-                      _snack('اختر المكان من القائمة المقترحة');
+                      await _geocodeManualInput(v, fieldType);
+                    }
+
+                    // ── إرسال للـ agent إذا تم تحديد كلا النقطتين ──
+                    if (routeRequest.lat1 != null &&
+                        routeRequest.long1 != null &&
+                        routeRequest.lat2 != null &&
+                        routeRequest.long2 != null) {
+                      await sendData(routeRequest);
                     }
                   },
                 ),

@@ -148,5 +148,6 @@
   "sign_in_to_see_saved": "Connectez-vous pour voir vos points sauvegardés",
   "sign_in_to_see_history": "Connectez-vous pour voir votre historique",
   "sign_in": "Se connecter",
-  "connect_as_guest": "Continuer en tant qu'invité"
+  "connect_as_guest": "Continuer en tant qu'invité",
+  "nearest_transport_warning": "Le transport le plus proche est à 5 km. Veuillez sélectionner des points plus proches (entre la Place des Martyrs et Dergana)"
 }
