@@ -1849,7 +1849,7 @@ class HomePageState extends State<HomePage> {
                   return;
                 }
 
-                // ✅ 1. أظهر الـ loading alert فوراً
+                // ✅ 1. أظهر الـ loading alert
                 showModalBottomSheet(
                   context: context,
                   backgroundColor: Colors.transparent,
@@ -1866,13 +1866,13 @@ class HomePageState extends State<HomePage> {
                   ),
                 );
 
-                // ✅ 2. جلب البيانات من الـ server
+                // ✅ 2. جلب البيانات
                 await selectLines();
 
-                // ✅ 3. أغلق الـ loading alert
+                // ✅ 3. أغلق الـ loading
                 if (mounted) Navigator.pop(context);
 
-                // ✅ 4. أظهر الـ alert مع النتائج
+                // ✅ 4. أظهر النتائج
                 if (mounted) {
                   showModalBottomSheet(
                     context: context,
@@ -1883,11 +1883,10 @@ class HomePageState extends State<HomePage> {
                         startText,
                         endText,
                         isLoading: false,
-                        onTraceLine: () {
-                          Navigator.pop(ctx);
+                        onTraceLine: () {          // ✅ التغيير هنا
                           setState(() {
                             _showGetLine = false;
-                            _showRouteCard = true;
+                            _showRouteCard = true; // يظهر البطاقة
                           });
                         },
                       ),
@@ -1995,9 +1994,9 @@ class HomePageState extends State<HomePage> {
                   ),
                 ),
                 const SizedBox(height: 20),
-                Text(
+                const Text(
                   'جاري البحث عن الخطوط...',
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Colors.white70,
                     fontSize: 15,
                     fontWeight: FontWeight.w500,
@@ -2122,7 +2121,8 @@ class HomePageState extends State<HomePage> {
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'nearest_transport_warning'.tr(),                            style: const TextStyle(color: Colors.white54, fontSize: 12),
+                            'nearest_transport_warning'.tr(),
+                            style: const TextStyle(color: Colors.white54, fontSize: 12),
                           ),
                         ),
                       ],
@@ -2140,7 +2140,7 @@ class HomePageState extends State<HomePage> {
                         ? null
                         : () async {
                       final selectedName = _selectedLineName!;
-                      Navigator.pop(context);
+                      Navigator.pop(context);   // ✅ يغلق الـ alert
 
                       setState(() {
                         agentRoutePoints = [];
@@ -2151,7 +2151,7 @@ class HomePageState extends State<HomePage> {
                       await sendData(routeRequest);
 
                       setState(() => _showGetLine = false);
-                      onTraceLine();
+                      onTraceLine();            // ✅ يظهر البطاقة
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: _selectedLineName == null
@@ -2223,6 +2223,7 @@ class HomePageState extends State<HomePage> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
+          // Handle bar
           Center(
             child: Container(
               width: 36, height: 4,
@@ -2234,91 +2235,98 @@ class HomePageState extends State<HomePage> {
             ),
           ),
 
-          // Start point row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Container(
-                width: 22, height: 22,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2.5),
+          // ✅ بطاقة الأماكن
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xFF243447),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFF3A4F65)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // نقطة البداية
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 32, height: 32,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF1A3A5C),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.radio_button_checked,
+                          color: Color(0xFF4A9EFF), size: 16),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        startText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    // ✅ زر الإغلاق فقط بدون save و favorite
+                    _bsIconBtn(Icons.close, const Color(0xFF3A4F65), onTap: () => setState(() {
+                      _showRouteCard = false;
+                      _showGetLine = true;
+                    })),
+                  ],
                 ),
-                child: Center(
-                  child: Container(
-                    width: 8, height: 8,
-                    decoration: const BoxDecoration(
-                        color: Colors.white, shape: BoxShape.circle),
+
+                // خط فاصل منقط
+                Padding(
+                  padding: const EdgeInsets.only(left: 15, top: 4, bottom: 4),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: List.generate(4, (_) => Container(
+                      width: 2, height: 5,
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      decoration: BoxDecoration(
+                        color: Colors.white38,
+                        borderRadius: BorderRadius.circular(1),
+                      ),
+                    )),
                   ),
                 ),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Text(
-                  startText,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              const SizedBox(width: 8),
-              _bsIconBtn(Icons.save_outlined, const Color(0xFF3A4F65), onTap: () {
-                if (startPointSelected != null) {
-                  _toggleSavepoint(startPointSelected!.longitude,
-                      startPointSelected!.latitude, startText);
-                }
-              }),
-              const SizedBox(width: 6),
-              _bsIconBtn(Icons.favorite_border, const Color(0xFF3A4F65), onTap: () {
-                if (startPointSelected != null) {
-                  _toggleFavpoint(startPointSelected!.longitude,
-                      startPointSelected!.latitude, startText);
-                }
-              }),
-              const SizedBox(width: 6),
-              _bsIconBtn(Icons.close, const Color(0xFF3A4F65), onTap: () => setState(() {
-                _showRouteCard = false;
-                _showGetLine = true;
-              })),
-            ],
-          ),
 
-          // Dotted connector
-          Padding(
-            padding: const EdgeInsets.only(left: 10, top: 4, bottom: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: List.generate(4, (_) => Container(
-                width: 1.5, height: 5,
-                margin: const EdgeInsets.symmetric(vertical: 2),
-                decoration: BoxDecoration(
-                    color: Colors.white38,
-                    borderRadius: BorderRadius.circular(1)),
-              )),
+                // نقطة النهاية
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Container(
+                      width: 32, height: 32,
+                      decoration: const BoxDecoration(
+                        color: Color(0xFF1A3A2A),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.location_on,
+                          color: Color(0xFF4AFF9E), size: 16),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        endText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
             ),
-          ),
-
-          // End point row
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Icon(Icons.location_on, color: Colors.white, size: 24),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  endText,
-                  style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.w600),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-            ],
           ),
         ],
       ),
